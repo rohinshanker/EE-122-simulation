@@ -18,7 +18,7 @@ set -Eeuo pipefail
 #       ./init_sim.sh --role client --iface eth0 --server
 #    c) Full validation (run this on a single machine that will act as both client and server, with optional smoke test):
 #       ./init_sim.sh --role both --iface eth0 --server
-# 3) common examples:
+# 3) example usage:
 #    a) Validate the server VM:
 #         ./init_sim.sh --role server
 #    b) Validate the client VM on interface eth0 and check that the server is reachable:
