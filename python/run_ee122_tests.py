@@ -48,8 +48,7 @@ ALGORITHMS = [
     {"label": "cubic", "iperf_name": "cubic"},
     {"label": "reno", "iperf_name": "reno"},
     {"label": "bbrv3", "iperf_name": "bbr"},
-    # Optional from brainstorm notes, disabled by default:
-    # {"label": "vegas", "iperf_name": "vegas"},
+    {"label": "vegas", "iperf_name": "vegas"},
 ]
 
 
