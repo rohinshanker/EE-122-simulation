@@ -15,6 +15,7 @@ import os
 import re
 import statistics
 import tempfile
+import textwrap
 from pathlib import Path
 from typing import Any
 
@@ -1644,17 +1645,30 @@ def make_summary_plots(
 
     if not smoke and not winners_df.empty:
         visible = winners_df.copy()
+        visible["condition"] = visible["condition"].map(
+            lambda value: "\n".join(textwrap.wrap(str(value), width=48, break_long_words=False))
+        )
         visible["winner_throughput_mbps"] = visible["winner_throughput_mbps"].map(
             lambda value: f"{value:.2f}" if pd.notna(value) else ""
         )
         visible["winner_utilization"] = visible["winner_utilization"].map(
             lambda value: f"{value:.3f}" if pd.notna(value) else ""
         )
-        fig_height = max(4.0, min(14.0, 0.35 * len(visible) + 1.2))
-        fig, ax = plt.subplots(figsize=(11, fig_height))
+        max_condition_lines = max(str(value).count("\n") + 1 for value in visible["condition"])
+        row_scale = 1.2 + 0.35 * max(0, max_condition_lines - 1)
+        fig_height = max(7.5, min(12.0, 0.34 * len(visible) * row_scale + 1.7))
+        fig, ax = plt.subplots(figsize=(13.5, fig_height))
         ax.axis("off")
         table = ax.table(
-            cellText=visible.values,
+            cellText=visible[
+                [
+                    "condition",
+                    "throughput_winner",
+                    "winner_throughput_mbps",
+                    "utilization_winner",
+                    "winner_utilization",
+                ]
+            ].values,
             colLabels=[
                 "Condition",
                 "Best Throughput",
@@ -1662,12 +1676,20 @@ def make_summary_plots(
                 "Best Utilization",
                 "Util.",
             ],
+            colWidths=[0.44, 0.17, 0.11, 0.18, 0.10],
             cellLoc="left",
-            loc="center",
+            bbox=[0.01, 0.02, 0.98, 0.88],
         )
         table.auto_set_font_size(False)
-        table.set_fontsize(7.5)
-        table.scale(1, 1.25)
+        table.set_fontsize(8.0)
+        for (row, col), cell in table.get_celld().items():
+            cell.get_text().set_wrap(True)
+            if row == 0:
+                cell.set_text_props(weight="bold", ha="center")
+            elif col == 0:
+                cell.set_text_props(ha="left")
+            else:
+                cell.set_text_props(ha="center")
         ax.set_title("Winner Table by Condition", pad=12)
         save_figure(
             fig,
