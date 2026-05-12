@@ -1,0 +1,158 @@
+[
+  {
+    "description": "Mean receiver-side throughput versus configured loss with 95% confidence intervals.",
+    "figure": "plots/loss/throughput_vs_loss_pct.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=loss"
+  },
+  {
+    "description": "Mean link utilization versus configured loss.",
+    "figure": "plots/loss/utilization_vs_loss_pct.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=loss"
+  },
+  {
+    "description": "Mean retransmits per second versus configured loss.",
+    "figure": "plots/loss/retransmits_per_second_vs_loss_pct.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=loss"
+  },
+  {
+    "description": "Mean receiver-side throughput versus configured one-way delay.",
+    "figure": "plots/delay/throughput_vs_delay_ms.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=delay"
+  },
+  {
+    "description": "Mean link utilization versus configured delay.",
+    "figure": "plots/delay/utilization_vs_delay_ms.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=delay"
+  },
+  {
+    "description": "First time to reach at least 90% of final throughput for three consecutive intervals.",
+    "figure": "plots/delay/convergence_time_vs_delay_ms.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=delay"
+  },
+  {
+    "description": "Mean receiver-side throughput versus configured netem rate, with ideal y=x line.",
+    "figure": "plots/rate/throughput_vs_rate_mbps.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=rate"
+  },
+  {
+    "description": "Mean link utilization versus configured netem rate.",
+    "figure": "plots/rate/utilization_vs_rate_mbps.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=rate"
+  },
+  {
+    "description": "Grouped bar chart of mean receiver-side throughput by common link category and algorithm.",
+    "figure": "plots/common_links/throughput_by_category_algorithm.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=common_links"
+  },
+  {
+    "description": "Grouped bar chart of mean utilization by common link category and algorithm.",
+    "figure": "plots/common_links/utilization_by_category_algorithm.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=common_links"
+  },
+  {
+    "description": "Grouped bar chart of retransmits per second by common link category and algorithm.",
+    "figure": "plots/common_links/retransmits_per_second_by_category_algorithm.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "suite=common_links"
+  },
+  {
+    "description": "Heatmap-style summary of mean utilization by condition and algorithm.",
+    "figure": "plots/summary/utilization_by_condition_heatmap.png",
+    "source_data": "tables/aggregated_results.csv",
+    "subset": "all suites"
+  },
+  {
+    "description": "Table of the algorithm with highest mean throughput and highest mean utilization per condition.",
+    "figure": "plots/summary/winner_table.png",
+    "source_data": "tables/aggregated_results.csv and tables/winner_table.csv",
+    "subset": "all suites"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/loss_loss_0pct_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Loss Time Series: loss 0pct"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/loss_loss_0p5pct_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Loss Time Series: loss 0p5pct"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/loss_loss_3pct_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Loss Time Series: loss 3pct"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/delay_delay_10ms_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Delay Time Series: delay 10ms"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/delay_delay_50ms_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Delay Time Series: delay 50ms"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/delay_delay_1000ms_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Delay Time Series: delay 1000ms"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/rate_rate_1mbps_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Rate Time Series: rate 1mbps"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/rate_rate_50mbps_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Rate Time Series: rate 50mbps"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/rate_rate_75mbps_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Rate Time Series: rate 75mbps"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/common_links_geo_1000ms_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Common Links Time Series: geo 1000ms"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/common_links_geo_500ms_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Common Links Time Series: geo 500ms"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/common_links_leo_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Common Links Time Series: leo"
+  },
+  {
+    "description": "Interval throughput over time; all trials are faint, median-throughput trial is emphasized.",
+    "figure": "plots/time_series/common_links_terrestrial_throughput.png",
+    "source_data": "parsed interval data and tables/raw_trials.csv",
+    "subset": "Common Links Time Series: terrestrial"
+  }
+]
