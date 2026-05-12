@@ -1,0 +1,16 @@
+{
+  "cleanup_command": [
+    "sudo",
+    "tc",
+    "qdisc",
+    "del",
+    "dev",
+    "ifb0",
+    "root"
+  ],
+  "cleanup_command_string": "sudo tc qdisc del dev ifb0 root",
+  "returncode": 0,
+  "stderr": "",
+  "stdout": "",
+  "timestamp_utc": "2026-05-11T06:29:06+00:00"
+}

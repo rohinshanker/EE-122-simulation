@@ -1,0 +1,96 @@
+{
+  "algorithm": {
+    "iperf_name": "reno",
+    "label": "reno"
+  },
+  "case": {
+    "category": null,
+    "delay_ms": 10.0,
+    "index": 1,
+    "jitter_ms": 0.0,
+    "label": null,
+    "loss_corr_pct": "0",
+    "loss_pct": "0",
+    "queue_packets": 83,
+    "rate_mbps": 50.0,
+    "suite": "delay"
+  },
+  "case_index": 1,
+  "case_slug": "case01_delay-10ms_jitter-0ms_rate-50mbps_loss-0pct_corr-0pct_q83",
+  "completed_at_utc": "2026-05-10T08:09:19+00:00",
+  "created_at_utc": "2026-05-10T08:05:17+00:00",
+  "elapsed_seconds": 241.10205698900245,
+  "environment_summary": {
+    "hostname": "nick-VMware20-1",
+    "iperf3_version": "iperf 3.18 (cJSON 1.7.15)\nLinux nick-VMware20-1 6.17.0-22-generic #22-Ubuntu SMP PREEMPT_DYNAMIC Fri Mar 13 11:59:13 UTC 2026 aarch64\nOptional features available: CPU affinity setting, IPv6 flow label, SCTP, TCP congestion algorithm setting, sendfile / zerocopy, socket pacing, authentication, bind to device, support IPv4 don't fragment, POSIX threads",
+    "platform": "Linux-6.17.0-22-generic-aarch64-with-glibc2.42",
+    "tc_version": "tc utility, iproute2-6.16.0, libbpf 1.6.2",
+    "tcp_congestion_control": {
+      "allowed": [
+        "reno",
+        "cubic",
+        "bbr",
+        "vegas"
+      ],
+      "available": [
+        "reno",
+        "cubic",
+        "bbr",
+        "vegas"
+      ]
+    }
+  },
+  "iperf_command": [
+    "iperf3",
+    "-c",
+    "172.16.212.129",
+    "-p",
+    "65535",
+    "-t",
+    "180",
+    "-O",
+    "60",
+    "-R",
+    "--json",
+    "--connect-timeout",
+    "5000",
+    "-C",
+    "reno"
+  ],
+  "iperf_command_string": "iperf3 -c 172.16.212.129 -p 65535 -t 180 -O 60 -R --json --connect-timeout 5000 -C reno",
+  "qdisc_after": "qdisc netem 8002: root refcnt 2 limit 83 delay 10ms rate 50Mbit seed 8689802734079665346\n Sent 100356865746 bytes 66292315 pkt (dropped 275011, overlimits 0 requeues 0) \n backlog 21262b 15p requeues 0",
+  "raw_json_file": "/home/nick/Desktop/EE-122-simulation/python/ee122_results/20260509_163006/delay/case01_delay-10ms_jitter-0ms_rate-50mbps_loss-0pct_corr-0pct_q83/reno/reno_10ms_0ms_50mbps_0_0_trial4.json",
+  "raw_json_sha256": "9bc9e6fdff8a294c61d70649c2594081ca8d09504d93cc043ad5159735dca134",
+  "raw_json_top_level_keys": [
+    "end",
+    "intervals",
+    "start"
+  ],
+  "returncode": 0,
+  "run_id": "20260509_163006",
+  "schema": "ee122_trial_metadata_v1",
+  "started_at_utc": "2026-05-10T08:05:17+00:00",
+  "status": "completed",
+  "stderr_log_file": "/home/nick/Desktop/EE-122-simulation/python/ee122_results/20260509_163006/delay/case01_delay-10ms_jitter-0ms_rate-50mbps_loss-0pct_corr-0pct_q83/reno/reno_10ms_0ms_50mbps_0_0_trial4.stderr.log",
+  "suite": "delay",
+  "tc_command": [
+    "sudo",
+    "tc",
+    "qdisc",
+    "replace",
+    "dev",
+    "ifb0",
+    "root",
+    "netem",
+    "limit",
+    "83",
+    "delay",
+    "10ms",
+    "rate",
+    "50mbit",
+    "loss",
+    "0%"
+  ],
+  "tc_command_string": "sudo tc qdisc replace dev ifb0 root netem limit 83 delay 10ms rate 50mbit loss 0%",
+  "trial": 4
+}

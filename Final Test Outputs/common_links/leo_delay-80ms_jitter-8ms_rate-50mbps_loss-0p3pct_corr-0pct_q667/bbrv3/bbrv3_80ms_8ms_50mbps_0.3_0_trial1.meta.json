@@ -1,0 +1,97 @@
+{
+  "algorithm": {
+    "iperf_name": "bbr",
+    "label": "bbrv3"
+  },
+  "case": {
+    "category": "leo",
+    "delay_ms": 80.0,
+    "index": 2,
+    "jitter_ms": 8.0,
+    "label": null,
+    "loss_corr_pct": "0",
+    "loss_pct": "0.3",
+    "queue_packets": 667,
+    "rate_mbps": 50.0,
+    "suite": "common_links"
+  },
+  "case_index": 2,
+  "case_slug": "leo_delay-80ms_jitter-8ms_rate-50mbps_loss-0p3pct_corr-0pct_q667",
+  "completed_at_utc": "2026-05-11T03:08:22+00:00",
+  "created_at_utc": "2026-05-11T03:04:21+00:00",
+  "elapsed_seconds": 241.6389337820001,
+  "environment_summary": {
+    "hostname": "nick-VMware20-1",
+    "iperf3_version": "iperf 3.18 (cJSON 1.7.15)\nLinux nick-VMware20-1 6.17.0-22-generic #22-Ubuntu SMP PREEMPT_DYNAMIC Fri Mar 13 11:59:13 UTC 2026 aarch64\nOptional features available: CPU affinity setting, IPv6 flow label, SCTP, TCP congestion algorithm setting, sendfile / zerocopy, socket pacing, authentication, bind to device, support IPv4 don't fragment, POSIX threads",
+    "platform": "Linux-6.17.0-22-generic-aarch64-with-glibc2.42",
+    "tc_version": "tc utility, iproute2-6.16.0, libbpf 1.6.2",
+    "tcp_congestion_control": {
+      "allowed": [
+        "reno",
+        "cubic",
+        "bbr",
+        "vegas"
+      ],
+      "available": [
+        "reno",
+        "cubic",
+        "bbr",
+        "vegas"
+      ]
+    }
+  },
+  "iperf_command": [
+    "iperf3",
+    "-c",
+    "172.16.212.129",
+    "-p",
+    "65535",
+    "-t",
+    "180",
+    "-O",
+    "60",
+    "-R",
+    "--json",
+    "--connect-timeout",
+    "5000",
+    "-C",
+    "bbr"
+  ],
+  "iperf_command_string": "iperf3 -c 172.16.212.129 -p 65535 -t 180 -O 60 -R --json --connect-timeout 5000 -C bbr",
+  "qdisc_after": "qdisc netem 8002: root refcnt 2 limit 667 delay 80ms  8ms loss 0.3% rate 50Mbit seed 7927827104439457105\n Sent 428813851953 bytes 283252378 pkt (dropped 390346, overlimits 0 requeues 0) \n backlog 531480b 352p requeues 0",
+  "raw_json_file": "/home/nick/Desktop/EE-122-simulation/python/ee122_results/20260509_163006/common_links/leo_delay-80ms_jitter-8ms_rate-50mbps_loss-0p3pct_corr-0pct_q667/bbrv3/bbrv3_80ms_8ms_50mbps_0.3_0_trial1.json",
+  "raw_json_sha256": "9e636d00e70a2c82ce39440b7262eec21f8c0d26ea956e7dc91e46229e42cce5",
+  "raw_json_top_level_keys": [
+    "end",
+    "intervals",
+    "start"
+  ],
+  "returncode": 0,
+  "run_id": "20260509_163006",
+  "schema": "ee122_trial_metadata_v1",
+  "started_at_utc": "2026-05-11T03:04:21+00:00",
+  "status": "completed",
+  "stderr_log_file": "/home/nick/Desktop/EE-122-simulation/python/ee122_results/20260509_163006/common_links/leo_delay-80ms_jitter-8ms_rate-50mbps_loss-0p3pct_corr-0pct_q667/bbrv3/bbrv3_80ms_8ms_50mbps_0.3_0_trial1.stderr.log",
+  "suite": "common_links",
+  "tc_command": [
+    "sudo",
+    "tc",
+    "qdisc",
+    "replace",
+    "dev",
+    "ifb0",
+    "root",
+    "netem",
+    "limit",
+    "667",
+    "delay",
+    "80ms",
+    "8ms",
+    "rate",
+    "50mbit",
+    "loss",
+    "0.3%"
+  ],
+  "tc_command_string": "sudo tc qdisc replace dev ifb0 root netem limit 667 delay 80ms 8ms rate 50mbit loss 0.3%",
+  "trial": 1
+}
