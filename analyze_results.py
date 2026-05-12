@@ -30,6 +30,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
+from matplotlib.transforms import ScaledTranslation
 import pandas as pd
 
 try:
@@ -137,6 +138,9 @@ SMOKE_ONLY_FIGURES = [
     Path("plots/delay/smoke_throughput.png"),
     Path("plots/rate/smoke_throughput.png"),
 ]
+
+LINE_STYLES = ["-", "--", "-.", ":", (0, (3, 1, 1, 1)), (0, (5, 2))]
+MARKERS = ["o", "s", "^", "D", "v", "P", "X"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -1126,6 +1130,59 @@ def sorted_algorithms(data: pd.DataFrame) -> list[str]:
     return ordered
 
 
+def x_dodge_transform(ax: plt.Axes, index: int, count: int, *, points: float = 5.0) -> Any:
+    """Offset coincident series in display space so overlapping lines remain visible."""
+    if count <= 1:
+        return ax.transData
+    offset_points = (index - (count - 1) / 2.0) * points
+    return ax.transData + ScaledTranslation(offset_points / 72.0, 0, ax.figure.dpi_scale_trans)
+
+
+def padded_limits(values: list[float], *, include_zero_floor: bool = False) -> tuple[float, float] | None:
+    clean = [float(value) for value in values if pd.notna(value) and math.isfinite(float(value))]
+    if not clean:
+        return None
+    low = min(clean)
+    high = max(clean)
+    if low == high:
+        magnitude = abs(low) if low else 1.0
+        padding = magnitude * 0.08
+    else:
+        padding = (high - low) * 0.08
+    low -= padding
+    high += padding
+    if include_zero_floor and low >= 0:
+        low = 0.0
+    return low, high
+
+
+def set_line_plot_limits(
+    ax: plt.Axes,
+    data: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    yerr_col: str | None,
+    *,
+    include_ideal_line: bool = False,
+) -> None:
+    x_values = pd.to_numeric(data[x_col], errors="coerce").dropna().tolist()
+    y_values = pd.to_numeric(data[y_col], errors="coerce")
+    y_limit_values = y_values.dropna().tolist()
+    if yerr_col and yerr_col in data:
+        yerr = pd.to_numeric(data[yerr_col], errors="coerce").fillna(0.0).abs()
+        y_limit_values.extend((y_values - yerr).dropna().tolist())
+        y_limit_values.extend((y_values + yerr).dropna().tolist())
+    if include_ideal_line:
+        y_limit_values.extend(x_values)
+
+    x_limits = padded_limits(x_values)
+    y_limits = padded_limits(y_limit_values, include_zero_floor=True)
+    if x_limits:
+        ax.set_xlim(*x_limits)
+    if y_limits:
+        ax.set_ylim(*y_limits)
+
+
 def line_error_plot(
     data: pd.DataFrame,
     x_col: str,
@@ -1147,21 +1204,32 @@ def line_error_plot(
         return False
 
     fig, ax = plt.subplots(figsize=(7.6, 4.8))
-    for algorithm in sorted_algorithms(plot_data):
+    algorithms = sorted_algorithms(plot_data)
+    for alg_index, algorithm in enumerate(algorithms):
         alg_data = plot_data[plot_data["algorithm"] == algorithm].sort_values(x_col)
         if alg_data.empty:
             continue
         yerr = None
         if yerr_col and yerr_col in alg_data:
             yerr = pd.to_numeric(alg_data[yerr_col], errors="coerce").fillna(0.0)
+        color = f"C{alg_index % 10}"
         ax.errorbar(
             alg_data[x_col],
             alg_data[y_col],
             yerr=yerr,
-            marker="o",
+            marker=MARKERS[alg_index % len(MARKERS)],
+            linestyle=LINE_STYLES[alg_index % len(LINE_STYLES)],
+            color=color,
+            markerfacecolor="white",
+            markeredgecolor=color,
+            markeredgewidth=1.3,
             capsize=3,
-            linewidth=2,
+            elinewidth=1.2,
+            linewidth=2.2,
+            alpha=0.9,
             label=algorithm,
+            transform=x_dodge_transform(ax, alg_index, len(algorithms)),
+            zorder=3 + alg_index,
         )
 
     if ideal_line:
@@ -1171,6 +1239,7 @@ def line_error_plot(
             high = float(values.max())
             ax.plot([low, high], [low, high], color="black", linestyle="--", linewidth=1.4, label="ideal")
 
+    set_line_plot_limits(ax, plot_data, x_col, y_col, yerr_col, include_ideal_line=ideal_line)
     ax.set_title(title)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
@@ -1713,6 +1782,7 @@ def make_single_timeseries_plot(
 
     for alg_index, algorithm in enumerate(algorithms):
         color = colors[alg_index % len(colors)]
+        transform = x_dodge_transform(ax, alg_index, len(algorithms), points=4.0)
         alg_intervals = plot_data[plot_data["algorithm"] == algorithm]
         alg_trials = trial_data[trial_data["algorithm"] == algorithm]
         median_raw = choose_median_trial(alg_trials)
@@ -1724,15 +1794,28 @@ def make_single_timeseries_plot(
                 trial_intervals["interval_mid_s"],
                 trial_intervals[y_col],
                 color=color,
+                linestyle=LINE_STYLES[alg_index % len(LINE_STYLES)],
                 linewidth=2.4 if is_median else 0.8,
                 alpha=0.95 if is_median else 0.18,
                 label=algorithm if is_median else None,
+                transform=transform,
+                zorder=3 + alg_index if is_median else 1,
             )
 
         if median_raw is None and not alg_intervals.empty:
             first = alg_intervals.sort_values("interval_mid_s")
-            ax.plot(first["interval_mid_s"], first[y_col], color=color, linewidth=2.0, label=algorithm)
+            ax.plot(
+                first["interval_mid_s"],
+                first[y_col],
+                color=color,
+                linestyle=LINE_STYLES[alg_index % len(LINE_STYLES)],
+                linewidth=2.0,
+                label=algorithm,
+                transform=transform,
+                zorder=3 + alg_index,
+            )
 
+    set_line_plot_limits(ax, plot_data, "interval_mid_s", y_col, None)
     ax.set_title(title)
     ax.set_xlabel("Time (s)")
     ax.set_ylabel(ylabel)
