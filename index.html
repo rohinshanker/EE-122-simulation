@@ -1,0 +1,2894 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Comparative analysis of CUBIC, Reno, BBRv3, and Vegas TCP congestion-control algorithms under emulated terrestrial and satellite network conditions."
+    />
+    <link rel="icon" type="image/svg+xml" href="site-assets/favicon.svg" />
+    <title>TCP Congestion Control | EE 122</title>
+    <style>
+      :root {
+        --ink: #172331;
+        --muted: #5d6a78;
+        --line: #dbe3ec;
+        --soft-line: #e9eef4;
+        --blue: #2d5eba;
+        --blue-strong: #1a4fae;
+        --blue-deep: #102c59;
+        --navy: #071c36;
+        --sky: #e9f0fd;
+        --sky-soft: #f5f8ff;
+        --orange: #f5a334;
+        --orange-soft: #fff5e5;
+        --white: #ffffff;
+        --surface: #f8fafc;
+        --success: #1d8065;
+        --radius: 6px;
+        --shadow: 0 14px 30px rgba(19, 44, 82, 0.14);
+        --max: 1180px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 74px;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--white);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        line-height: 1.55;
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .container {
+        width: min(calc(100% - 40px), var(--max));
+        margin-inline: auto;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        border-bottom: 1px solid rgba(219, 227, 236, 0.9);
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(16px);
+      }
+
+      .nav-shell {
+        display: flex;
+        min-height: 68px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: var(--navy);
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 4px;
+        background: var(--blue);
+        color: var(--white);
+      }
+
+      .brand-copy {
+        display: grid;
+        line-height: 1.1;
+      }
+
+      .brand-copy strong {
+        font-size: 0.88rem;
+        letter-spacing: 0;
+      }
+
+      .brand-copy span {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .main-nav {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .main-nav a {
+        position: relative;
+        color: #3c4a58;
+        font-size: 0.79rem;
+        font-weight: 750;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .main-nav a:hover {
+        color: var(--blue);
+      }
+
+      .main-nav a[data-section-link].active {
+        color: var(--blue);
+      }
+
+      .main-nav a[data-section-link].active::after {
+        position: absolute;
+        right: 0;
+        bottom: -10px;
+        left: 0;
+        height: 2px;
+        background: var(--blue);
+        content: "";
+      }
+
+      .nav-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        border: 1px solid var(--blue);
+        border-radius: 4px;
+        padding: 8px 11px;
+        color: var(--blue) !important;
+      }
+
+      .nav-toggle {
+        display: none;
+        border: 0;
+        background: transparent;
+        color: var(--navy);
+      }
+
+      .hero {
+        position: relative;
+        height: 455px;
+        overflow: hidden;
+        background: var(--navy);
+        color: var(--white);
+      }
+
+      .hero-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        opacity: 0.38;
+        filter: saturate(0.9) contrast(1.05);
+      }
+
+      .hero::before {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(90deg, rgba(5, 24, 49, 0.98) 0%, rgba(7, 28, 54, 0.91) 45%, rgba(7, 28, 54, 0.34) 100%),
+          linear-gradient(180deg, transparent 60%, rgba(5, 24, 49, 0.78));
+        content: "";
+      }
+
+      .hero-content {
+        position: relative;
+        display: grid;
+        height: 455px;
+        align-content: center;
+        padding-block: 24px 16px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 16px;
+        color: var(--blue);
+        font-size: 0.72rem;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .hero .eyebrow {
+        color: #a8c8ff;
+      }
+
+      .eyebrow::before {
+        width: 28px;
+        height: 2px;
+        background: currentColor;
+        content: "";
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 880px;
+        margin-bottom: 10px;
+        font-size: clamp(2.6rem, 4.5vw, 4rem);
+        font-weight: 820;
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .hero-lede {
+        max-width: 720px;
+        margin-bottom: 0;
+        color: #d6e4f7;
+        font-size: 0.9rem;
+      }
+
+      .hero-actions,
+      .doc-actions,
+      .viewer-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .btn {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        border: 1px solid transparent;
+        border-radius: 4px;
+        padding: 10px 14px;
+        background: var(--blue);
+        color: var(--white);
+        font-size: 0.82rem;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .btn:hover {
+        background: var(--blue-strong);
+      }
+
+      .btn-secondary {
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .btn-light {
+        border-color: var(--line);
+        background: var(--white);
+        color: var(--blue);
+      }
+
+      .btn-light:hover {
+        background: var(--sky-soft);
+      }
+
+      .btn-icon {
+        width: 40px;
+        min-height: 40px;
+        padding: 0;
+      }
+
+      .hero-metrics {
+        display: grid;
+        max-width: 790px;
+        margin-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.28);
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .hero-metric {
+        padding: 6px 16px 0 0;
+      }
+
+      .hero-metric strong {
+        display: block;
+        color: var(--white);
+        font-size: 1.18rem;
+      }
+
+      .hero-metric span {
+        color: #b9cee9;
+        font-size: 0.71rem;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .section {
+        padding-block: 84px;
+      }
+
+      .section-soft {
+        border-block: 1px solid var(--soft-line);
+        background: var(--sky-soft);
+      }
+
+      .section-blue {
+        background: var(--navy);
+        color: var(--white);
+      }
+
+      .section-header {
+        display: grid;
+        max-width: 760px;
+        margin-bottom: 34px;
+      }
+
+      .section-header h2 {
+        margin-bottom: 13px;
+        color: var(--navy);
+        font-size: clamp(2rem, 4vw, 3.25rem);
+        line-height: 1.02;
+      }
+
+      .section-header p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 1rem;
+      }
+
+      .section-blue .section-header h2 {
+        color: var(--white);
+      }
+
+      .section-blue .section-header p {
+        color: #c4d5eb;
+      }
+
+      .intro-grid {
+        display: grid;
+        gap: 50px;
+        grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.95fr);
+      }
+
+      .intro-copy {
+        color: #465667;
+        font-size: 1.03rem;
+      }
+
+      .intro-copy p:last-child {
+        margin-bottom: 0;
+      }
+
+      .course-section {
+        border-block: 1px solid #cfddf1;
+        padding-block: 64px;
+        background: #edf4ff;
+      }
+
+      .course-section .section-header {
+        margin-bottom: 22px;
+      }
+
+      .course-section .section-header h2 {
+        font-size: clamp(1.8rem, 3.4vw, 2.7rem);
+      }
+
+      .course-grid {
+        display: grid;
+        gap: 46px;
+        align-items: start;
+        grid-template-columns: minmax(0, 1.25fr) minmax(250px, 0.75fr);
+      }
+
+      .course-copy {
+        color: #465667;
+        font-size: 1rem;
+      }
+
+      .course-instructor {
+        border-top: 3px solid var(--blue);
+        padding: 18px 20px 20px;
+        background: var(--white);
+      }
+
+      .course-instructor span {
+        display: block;
+        color: var(--blue);
+        font-size: 0.7rem;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .course-instructor h3 {
+        margin: 7px 0 4px;
+        color: var(--navy);
+        font-size: 1.3rem;
+      }
+
+      .course-instructor p {
+        margin: 0 0 15px;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      .course-reference,
+      .course-instructor a {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--blue);
+        font-size: 0.74rem;
+        font-weight: 850;
+        text-decoration: none;
+        text-transform: uppercase;
+      }
+
+      .course-reference {
+        margin-top: 4px;
+      }
+
+      .course-reference:hover,
+      .course-instructor a:hover {
+        color: var(--blue-strong);
+      }
+
+      .course-reference i,
+      .course-instructor a i {
+        width: 15px;
+        height: 15px;
+      }
+
+      .takeaway {
+        border-left: 4px solid var(--orange);
+        padding: 22px 24px;
+        background: var(--orange-soft);
+      }
+
+      .takeaway .eyebrow {
+        margin-bottom: 10px;
+        color: #ae6505;
+      }
+
+      .takeaway p {
+        margin-bottom: 0;
+        color: #694716;
+        font-size: 1rem;
+        font-weight: 680;
+      }
+
+      .algorithm-grid {
+        display: grid;
+        gap: 1px;
+        border: 1px solid var(--line);
+        background: var(--line);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .algorithm {
+        min-height: 230px;
+        padding: 22px;
+        background: var(--white);
+      }
+
+      .algorithm-name {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 15px;
+      }
+
+      .algorithm h3 {
+        margin: 0;
+        color: var(--navy);
+        font-size: 1.25rem;
+      }
+
+      .tag {
+        display: inline-flex;
+        border-radius: 999px;
+        padding: 3px 8px;
+        background: var(--sky);
+        color: var(--blue);
+        font-size: 0.65rem;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .algorithm p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      .method-grid {
+        display: grid;
+        gap: 42px;
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      }
+
+      .pipeline {
+        display: grid;
+        gap: 0;
+      }
+
+      .pipeline-step {
+        position: relative;
+        display: grid;
+        gap: 14px;
+        padding: 17px 0 17px 44px;
+        border-bottom: 1px solid rgba(219, 227, 236, 0.7);
+      }
+
+      .pipeline-step:last-child {
+        border-bottom: 0;
+      }
+
+      .pipeline-number {
+        position: absolute;
+        top: 17px;
+        left: 0;
+        display: grid;
+        width: 27px;
+        height: 27px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--blue);
+        color: var(--white);
+        font-size: 0.72rem;
+        font-weight: 850;
+      }
+
+      .pipeline-step h3 {
+        margin: 0;
+        color: var(--navy);
+        font-size: 1rem;
+      }
+
+      .pipeline-step p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+      }
+
+      .method-aside {
+        border: 1px solid var(--line);
+        background: var(--white);
+      }
+
+      .method-aside-header {
+        padding: 17px 20px;
+        border-bottom: 1px solid var(--line);
+        background: var(--sky);
+      }
+
+      .method-aside-header h3 {
+        margin: 0;
+        color: var(--navy);
+        font-size: 1.08rem;
+      }
+
+      .spec-list {
+        display: grid;
+        margin: 0;
+      }
+
+      .spec-list div {
+        display: grid;
+        padding: 13px 20px;
+        border-bottom: 1px solid var(--soft-line);
+        grid-template-columns: 150px 1fr;
+      }
+
+      .spec-list div:last-child {
+        border-bottom: 0;
+      }
+
+      dt {
+        color: var(--muted);
+        font-size: 0.73rem;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      dd {
+        margin: 0;
+        color: var(--ink);
+        font-size: 0.86rem;
+        font-weight: 700;
+      }
+
+      .matrix-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+        background: var(--white);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 14px 16px;
+        border-bottom: 1px solid var(--soft-line);
+        text-align: left;
+        white-space: nowrap;
+      }
+
+      th {
+        background: var(--sky);
+        color: var(--blue-deep);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+      }
+
+      td {
+        color: #4c5b6c;
+        font-size: 0.86rem;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .matrix-note {
+        margin-top: 13px;
+        color: var(--muted);
+        font-size: 0.83rem;
+      }
+
+      .finding-grid {
+        display: grid;
+        gap: 1px;
+        border: 1px solid var(--line);
+        background: var(--line);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .finding {
+        min-height: 260px;
+        padding: 22px;
+        background: var(--white);
+      }
+
+      .finding strong {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--blue);
+        font-size: 2rem;
+        line-height: 1;
+      }
+
+      .finding h3 {
+        margin-bottom: 10px;
+        color: var(--navy);
+        font-size: 1rem;
+      }
+
+      .finding p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .finding-emphasis {
+        background: var(--blue);
+      }
+
+      .finding-emphasis strong,
+      .finding-emphasis h3 {
+        color: var(--white);
+      }
+
+      .finding-emphasis p {
+        color: #d4e4ff;
+      }
+
+      .feature-plot {
+        display: grid;
+        gap: 28px;
+        align-items: center;
+        margin-top: 32px;
+        grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+      }
+
+      .feature-plot img {
+        width: 100%;
+        border: 1px solid var(--line);
+        background: var(--white);
+      }
+
+      .feature-copy h3 {
+        margin-bottom: 10px;
+        color: var(--navy);
+        font-size: 1.45rem;
+      }
+
+      .feature-copy p {
+        color: var(--muted);
+      }
+
+      .tradeoff {
+        margin-top: 18px;
+        border-left: 3px solid var(--orange);
+        padding: 13px 16px;
+        background: var(--orange-soft);
+        color: #694716;
+        font-size: 0.86rem;
+      }
+
+      .paper-results {
+        margin-top: 36px;
+      }
+
+      .paper-results-intro {
+        max-width: 850px;
+      }
+
+      .paper-results-intro h3,
+      .paper-result-group h3 {
+        margin-bottom: 12px;
+        color: var(--navy);
+        font-size: 1.55rem;
+      }
+
+      .paper-results-intro p,
+      .paper-result-analysis {
+        color: #465667;
+        font-size: 0.96rem;
+      }
+
+      .paper-result-group {
+        margin-top: 34px;
+        padding-top: 22px;
+        border-top: 1px solid var(--line);
+      }
+
+      .paper-result-analysis {
+        max-width: 940px;
+        margin-bottom: 14px;
+      }
+
+      .paper-results .finding {
+        min-height: 0;
+        padding: 18px;
+      }
+
+      .paper-results .finding strong {
+        font-size: 1.7rem;
+      }
+
+      .result-split {
+        display: grid;
+        gap: 28px;
+        align-items: start;
+        grid-template-columns: minmax(0, 0.94fr) minmax(420px, 1.06fr);
+      }
+
+      .result-copy h3 {
+        margin-top: 0;
+      }
+
+      .result-copy .paper-result-analysis:last-child {
+        margin-bottom: 0;
+      }
+
+      .preliminary-result-split {
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 0.68fr);
+      }
+
+      .summary-result-split {
+        grid-template-columns: minmax(0, 0.68fr) minmax(560px, 1.32fr);
+      }
+
+      .preliminary-figure {
+        width: 100%;
+        max-width: 440px;
+        justify-self: end;
+      }
+
+      .result-carousel {
+        min-width: 0;
+        border: 1px solid var(--line);
+        background: var(--white);
+      }
+
+      .result-carousel .paper-figure {
+        border: 0;
+      }
+
+      .carousel-slide:not(.active) {
+        display: none;
+      }
+
+      .result-carousel-controls {
+        display: flex;
+        min-height: 52px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px solid var(--line);
+        padding: 8px 10px;
+        background: #f8fafc;
+      }
+
+      .carousel-button {
+        display: inline-grid;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 auto;
+        place-items: center;
+        border: 1px solid #c8d7ea;
+        border-radius: 4px;
+        background: var(--white);
+        color: var(--blue);
+      }
+
+      .carousel-button:hover {
+        border-color: var(--blue);
+        background: var(--sky);
+      }
+
+      .carousel-button i {
+        width: 18px;
+        height: 18px;
+      }
+
+      .carousel-status {
+        color: var(--muted);
+        font-size: 0.75rem;
+        font-weight: 800;
+      }
+
+      .paper-figure-grid {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .paper-figure {
+        overflow: hidden;
+        margin: 0;
+        border: 1px solid var(--line);
+        background: var(--white);
+      }
+
+      .paper-figure a {
+        display: block;
+        padding: 10px;
+        background: var(--white);
+      }
+
+      .paper-figure img {
+        width: 100%;
+        height: auto;
+      }
+
+      .paper-figure figcaption {
+        display: flex;
+        min-height: 58px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        border-top: 1px solid var(--line);
+        padding: 11px 12px;
+        color: var(--navy);
+        font-size: 0.76rem;
+        font-weight: 800;
+      }
+
+      .paper-figure figcaption i {
+        width: 16px;
+        height: 16px;
+        flex: 0 0 auto;
+        color: var(--blue);
+      }
+
+      .paper-figure-wide {
+        grid-column: 1 / -1;
+      }
+
+      .viewer-shell {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: var(--white);
+        color: var(--ink);
+        box-shadow: var(--shadow);
+      }
+
+      .viewer-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+        background: #f8fafc;
+      }
+
+      .viewer-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
+      .viewer-tab {
+        border: 1px solid transparent;
+        border-radius: 4px;
+        padding: 7px 10px;
+        background: transparent;
+        color: #536171;
+        font-size: 0.72rem;
+        font-weight: 800;
+      }
+
+      .viewer-tab:hover,
+      .viewer-tab.active {
+        border-color: #bcd0f2;
+        background: var(--sky);
+        color: var(--blue);
+      }
+
+      .viewer-counter {
+        color: var(--muted);
+        font-size: 0.74rem;
+        font-weight: 750;
+        white-space: nowrap;
+      }
+
+      .viewer-main {
+        display: grid;
+        min-height: 575px;
+        grid-template-columns: 250px minmax(0, 1fr);
+      }
+
+      .figure-list {
+        max-height: 575px;
+        overflow-y: auto;
+        border-right: 1px solid var(--line);
+        background: #fbfcfe;
+      }
+
+      .figure-list-button {
+        display: grid;
+        width: 100%;
+        gap: 4px;
+        border: 0;
+        border-bottom: 1px solid var(--soft-line);
+        padding: 13px 14px;
+        background: transparent;
+        color: var(--ink);
+        text-align: left;
+      }
+
+      .figure-list-button:hover {
+        background: var(--sky-soft);
+      }
+
+      .figure-list-button.active {
+        border-left: 3px solid var(--blue);
+        padding-left: 11px;
+        background: var(--sky);
+      }
+
+      .figure-list-button strong {
+        font-size: 0.78rem;
+        line-height: 1.25;
+      }
+
+      .figure-list-button span {
+        color: var(--muted);
+        font-size: 0.67rem;
+        font-weight: 750;
+        text-transform: uppercase;
+      }
+
+      .figure-stage {
+        display: grid;
+        min-width: 0;
+        grid-template-rows: 1fr auto;
+      }
+
+      .figure-canvas {
+        display: grid;
+        min-height: 0;
+        place-items: center;
+        padding: 18px;
+        background: #f1f5f9;
+      }
+
+      .figure-canvas img {
+        max-height: 480px;
+        border: 1px solid var(--line);
+        background: var(--white);
+        box-shadow: 0 5px 16px rgba(20, 46, 80, 0.1);
+        object-fit: contain;
+      }
+
+      .figure-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 15px 18px;
+        border-top: 1px solid var(--line);
+      }
+
+      .figure-meta h3 {
+        margin: 0 0 4px;
+        color: var(--navy);
+        font-size: 1rem;
+      }
+
+      .figure-meta p {
+        max-width: 670px;
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .viewer-actions {
+        flex-wrap: nowrap;
+      }
+
+      .future-grid,
+      .document-grid {
+        display: grid;
+        gap: 1px;
+        border: 1px solid var(--line);
+        background: var(--line);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .document-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .future-item,
+      .document {
+        padding: 22px;
+        background: var(--white);
+      }
+
+      .future-item i,
+      .document i {
+        color: var(--blue);
+      }
+
+      .future-item h3,
+      .document h3 {
+        margin: 14px 0 8px;
+        color: var(--navy);
+        font-size: 1rem;
+      }
+
+      .future-item p,
+      .document p {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .document {
+        display: grid;
+        min-height: 224px;
+        align-content: space-between;
+      }
+
+      .document-primary {
+        border-top: 3px solid var(--blue);
+      }
+
+      .document-meta {
+        display: block;
+        margin-top: 8px;
+        color: var(--blue);
+        font-size: 0.69rem;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .document .doc-actions {
+        margin-top: 18px;
+      }
+
+      .document .btn {
+        min-height: 36px;
+        padding: 8px 10px;
+        font-size: 0.75rem;
+      }
+
+      .hero .eyebrow {
+        margin-bottom: 10px;
+      }
+
+      .hero-actions .btn {
+        min-height: 36px;
+        padding: 8px 11px;
+        font-size: 0.76rem;
+      }
+
+      .source-clipping {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        background: var(--white);
+        box-shadow: var(--shadow);
+      }
+
+      .source-clipping img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .source-clipping-poster img {
+        height: 420px;
+        object-fit: cover;
+        object-position: top;
+      }
+
+      .source-clipping figcaption {
+        border-top: 1px solid var(--line);
+        padding: 10px 12px;
+        color: var(--muted);
+        font-size: 0.72rem;
+        font-weight: 750;
+      }
+
+      .pdf-reader {
+        overflow: hidden;
+        margin-bottom: 34px;
+        border: 1px solid var(--line);
+        background: var(--white);
+        box-shadow: var(--shadow);
+      }
+
+      .pdf-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 14px;
+        border-bottom: 1px solid var(--line);
+        background: #f8fafc;
+      }
+
+      .pdf-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
+      .pdf-tab {
+        border: 1px solid transparent;
+        border-radius: 4px;
+        padding: 7px 10px;
+        background: transparent;
+        color: #536171;
+        font-size: 0.72rem;
+        font-weight: 800;
+      }
+
+      .pdf-tab:hover,
+      .pdf-tab.active {
+        border-color: #bcd0f2;
+        background: var(--sky);
+        color: var(--blue);
+      }
+
+      .pdf-frame {
+        display: block;
+        width: 100%;
+        height: 690px;
+        border: 0;
+        background: #eef3f9;
+      }
+
+      .team-grid {
+        display: grid;
+        gap: 1px;
+        border: 1px solid var(--line);
+        background: var(--line);
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .team-member {
+        display: grid;
+        min-height: 330px;
+        align-content: start;
+        padding: 22px;
+        background: var(--white);
+      }
+
+      .team-member-mentor {
+        border-top: 3px solid var(--orange);
+      }
+
+      .profile-placeholder {
+        display: grid;
+        width: 76px;
+        height: 76px;
+        place-items: center;
+        border: 1px solid #cdd9e8;
+        border-radius: 50%;
+        background: var(--sky);
+        color: var(--blue);
+      }
+
+      .profile-placeholder i {
+        width: 34px;
+        height: 34px;
+      }
+
+      .team-role {
+        display: block;
+        margin-top: 18px;
+        color: var(--blue);
+        font-size: 0.68rem;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .team-member-mentor .team-role {
+        color: #a55c00;
+      }
+
+      .team-member h3 {
+        margin: 5px 0 8px;
+        color: var(--navy);
+        font-size: 1.12rem;
+      }
+
+      .team-member p {
+        margin-bottom: 18px;
+        color: var(--muted);
+        font-size: 0.84rem;
+      }
+
+      .team-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: auto;
+      }
+
+      .team-links a {
+        display: inline-flex;
+        min-height: 34px;
+        align-items: center;
+        gap: 6px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 7px 9px;
+        color: var(--blue);
+        font-size: 0.73rem;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .team-links a:hover {
+        border-color: #bcd0f2;
+        background: var(--sky);
+      }
+
+      .acknowledgement {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-top: 32px;
+        border-left: 4px solid var(--orange);
+        padding: 18px 20px;
+        background: var(--orange-soft);
+      }
+
+      .acknowledgement p {
+        margin: 0;
+        color: #694716;
+        font-size: 0.88rem;
+      }
+
+      .site-footer {
+        padding-block: 28px;
+        background: #06172d;
+        color: #b9c8da;
+      }
+
+      .footer-shell {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .footer-shell p {
+        margin: 0;
+        font-size: 0.76rem;
+      }
+
+      .footer-shell a {
+        color: #dce9fb;
+        font-size: 0.76rem;
+        font-weight: 750;
+        text-decoration: none;
+      }
+
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+        display: none;
+        padding: 24px;
+        background: rgba(3, 13, 29, 0.88);
+      }
+
+      .lightbox.open {
+        display: grid;
+        place-items: center;
+      }
+
+      .lightbox-inner {
+        display: grid;
+        width: min(98vw, 1480px);
+        max-height: 94vh;
+        grid-template-rows: auto minmax(0, 1fr);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: var(--white);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.36);
+      }
+
+      .lightbox-bar {
+        display: flex;
+        min-height: 52px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 8px 10px 8px 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .lightbox-bar strong {
+        color: var(--navy);
+        font-size: 0.88rem;
+      }
+
+      .lightbox img {
+        width: 100%;
+        height: 100%;
+        max-height: calc(94vh - 54px);
+        padding: 12px;
+        object-fit: contain;
+      }
+
+      @media (max-width: 1080px) {
+        .main-nav {
+          position: absolute;
+          top: 68px;
+          right: 0;
+          left: 0;
+          display: none;
+          align-items: stretch;
+          padding: 15px 20px 18px;
+          border-bottom: 1px solid var(--line);
+          background: var(--white);
+          box-shadow: 0 12px 20px rgba(19, 44, 82, 0.08);
+          flex-direction: column;
+          gap: 13px;
+        }
+
+        .main-nav.open {
+          display: flex;
+        }
+
+        .main-nav a[data-section-link].active {
+          border-radius: 4px;
+          padding: 7px 8px;
+          background: var(--sky);
+        }
+
+        .main-nav a[data-section-link].active::after {
+          display: none;
+        }
+
+        .nav-action {
+          justify-content: center;
+        }
+
+        .nav-toggle {
+          display: inline-flex;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .main-nav {
+          position: absolute;
+          top: 68px;
+          right: 0;
+          left: 0;
+          display: none;
+          align-items: stretch;
+          padding: 15px 20px 18px;
+          border-bottom: 1px solid var(--line);
+          background: var(--white);
+          box-shadow: 0 12px 20px rgba(19, 44, 82, 0.08);
+          flex-direction: column;
+          gap: 13px;
+        }
+
+        .main-nav.open {
+          display: flex;
+        }
+
+        .main-nav a[data-section-link].active {
+          border-radius: 4px;
+          padding: 7px 8px;
+          background: var(--sky);
+        }
+
+        .main-nav a[data-section-link].active::after {
+          display: none;
+        }
+
+        .nav-action {
+          justify-content: center;
+        }
+
+        .nav-toggle {
+          display: inline-flex;
+        }
+
+        .hero,
+        .hero-content {
+          height: 455px;
+        }
+
+        h1 {
+          max-width: 760px;
+          font-size: clamp(2.55rem, 7vw, 3.9rem);
+        }
+
+        .algorithm-grid,
+        .finding-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .intro-grid,
+        .course-grid,
+        .method-grid,
+        .feature-plot,
+        .result-split,
+        .paper-figure-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .preliminary-figure {
+          max-width: 560px;
+          justify-self: start;
+        }
+
+        .course-section {
+          padding-block: 52px;
+        }
+
+        .course-grid {
+          gap: 28px;
+        }
+
+        .viewer-main {
+          grid-template-columns: 200px minmax(0, 1fr);
+        }
+
+        .figure-meta {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .document-grid,
+        .future-grid,
+        .team-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .container {
+          width: min(calc(100% - 26px), var(--max));
+        }
+
+        .hero,
+        .hero-content {
+          height: 470px;
+        }
+
+        .hero-content {
+          padding-block: 14px 10px;
+        }
+
+        h1 {
+          font-size: 2.22rem;
+        }
+
+        .hero-lede {
+          font-size: 0.8rem;
+          line-height: 1.45;
+        }
+
+        .hero-metrics {
+          margin-top: 8px;
+          grid-template-columns: repeat(4, 1fr);
+        }
+
+        .hero-metric {
+          padding: 5px 3px 0 0;
+        }
+
+        .hero-metric strong {
+          font-size: 1.02rem;
+        }
+
+        .hero-metric span {
+          font-size: 0.54rem;
+          line-height: 1.2;
+        }
+
+        .hero .eyebrow {
+          margin-bottom: 6px;
+          font-size: 0.64rem;
+        }
+
+        .hero-actions .btn {
+          min-height: 34px;
+          padding: 7px 9px;
+          font-size: 0.7rem;
+        }
+
+        .section {
+          padding-block: 62px;
+        }
+
+        .course-section {
+          padding-block: 44px;
+        }
+
+        .algorithm-grid,
+        .finding-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .algorithm,
+        .finding {
+          min-height: auto;
+        }
+
+        .spec-list div {
+          gap: 5px;
+          grid-template-columns: 1fr;
+        }
+
+        .viewer-toolbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .viewer-main {
+          display: block;
+          min-height: 0;
+        }
+
+        .figure-list {
+          display: flex;
+          max-height: none;
+          overflow-x: auto;
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .figure-list-button {
+          min-width: 165px;
+          border-right: 1px solid var(--soft-line);
+          border-bottom: 0;
+        }
+
+        .figure-list-button.active {
+          border-bottom: 3px solid var(--blue);
+          border-left: 0;
+          padding: 13px 14px 10px;
+        }
+
+        .figure-canvas {
+          min-height: 260px;
+          padding: 10px;
+        }
+
+        .figure-canvas img {
+          max-height: 300px;
+        }
+
+        .figure-meta {
+          padding: 13px;
+        }
+
+        .acknowledgement,
+        .footer-shell {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .pdf-toolbar {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .pdf-frame {
+          height: 510px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a class="brand" href="#top" aria-label="TCP congestion control project home">
+          <span class="brand-mark"><i data-lucide="network" aria-hidden="true"></i></span>
+          <span class="brand-copy">
+            <strong>TCP CCA Lab</strong>
+            <span>EE 122 / UC Berkeley</span>
+          </span>
+        </a>
+        <button class="nav-toggle btn-icon" type="button" aria-label="Toggle navigation" aria-expanded="false">
+          <i data-lucide="menu" aria-hidden="true"></i>
+        </button>
+        <nav class="main-nav" aria-label="Main navigation">
+          <a data-section-link href="#overview">Overview</a>
+          <a data-section-link href="#background">Background</a>
+          <a data-section-link href="#methods">Methods</a>
+          <a data-section-link href="#findings">Results</a>
+          <a data-section-link href="#figures">Figures</a>
+          <a data-section-link href="#future">Future Work</a>
+          <a data-section-link href="#documents">Documents</a>
+          <a data-section-link href="#team">Team</a>
+          <a data-section-link href="#course">Course</a>
+          <a class="nav-action" href="project-resources/extended-abstract.pdf" target="_blank" rel="noreferrer">
+            <i data-lucide="file-text" aria-hidden="true"></i>
+            Read abstract
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <img
+          class="hero-image"
+          src="analysis/plots/common_links/throughput_by_category_algorithm.png"
+          alt=""
+          aria-hidden="true"
+        />
+        <div class="container hero-content">
+          <p class="eyebrow">EE 122 Network Systems Study</p>
+          <h1 id="hero-title">Comparative Analysis of Modern TCP Congestion Control</h1>
+          <p class="hero-lede">
+            The goal of this project is to evaluate and compare the performance of modern TCP
+            congestion control algorithms under a range of emulated network conditions.
+          </p>
+          <div class="hero-actions">
+            <a class="btn" href="#figures">
+              <i data-lucide="chart-no-axes-combined" aria-hidden="true"></i>
+              Explore all figures
+            </a>
+            <a class="btn btn-secondary" href="#findings">
+              <i data-lucide="arrow-down" aria-hidden="true"></i>
+              Read findings
+            </a>
+          </div>
+          <div class="hero-metrics" aria-label="Experiment summary">
+            <div class="hero-metric"><strong>460</strong><span>iperf3 trials</span></div>
+            <div class="hero-metric"><strong>23</strong><span>link conditions</span></div>
+            <div class="hero-metric"><strong>4</strong><span>TCP algorithms</span></div>
+            <div class="hero-metric"><strong>26</strong><span>report figures</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="overview">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">01 / Overview</p>
+            <h2>Problem Statement</h2>
+            <p>
+              While traditional congestion control schemes like CUBIC are widely deployed, they are
+              known to be sensitive to high latency and packet loss, which are common in environments
+              such as satellite communication links.
+            </p>
+          </div>
+          <div class="intro-grid">
+            <div class="intro-copy">
+              <p>
+                Our research focuses on understanding how each algorithm behaves under controlled
+                variations in delay, packet loss, and link characteristics, with particular emphasis on
+                scenarios representative of satellite-based communication systems to determine the
+                optimal algorithm for such network conditions.
+              </p>
+              <p>
+                Our project addresses this gap by using controlled tc/netem experiments to evaluate
+                how these algorithms respond to high delay, packet loss, jitter, and constrained link
+                rates.
+              </p>
+            </div>
+            <aside class="takeaway">
+              <p class="eyebrow">Conclusion</p>
+              <p>
+                BBRv3 is the clear choice for high loss, high latency networks like GEO satellite
+                links.
+              </p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-soft" id="background" aria-labelledby="algorithms-title">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">02 / Background</p>
+            <h2 id="algorithms-title">Background</h2>
+            <p>
+              Our experiments compare BBRv3, CUBIC, Reno, and Vegas. The descriptions below are
+              excerpted from the Background section of our extended abstract.
+            </p>
+          </div>
+          <div class="algorithm-grid">
+            <article class="algorithm">
+              <div class="algorithm-name">
+                <h3>BBRv3</h3>
+                <span class="tag">Model-based</span>
+              </div>
+              <p>
+                Unlike loss-based CCAs like Reno and CUBIC, BBR builds an explicit model of the
+                network path. BBR operates by periodically probing the bottleneck bandwidth and round
+                trip time of the link.
+              </p>
+            </article>
+            <article class="algorithm">
+              <div class="algorithm-name">
+                <h3>Reno</h3>
+                <span class="tag">Loss-based</span>
+              </div>
+              <p>
+                Reno controls congestion by modulating how much unacknowledged data the sender can
+                have in flight via a congestion window. Reno can underutilize
+                high-bandwidth-delay-products or lossy paths.
+              </p>
+            </article>
+            <article class="algorithm">
+              <div class="algorithm-name">
+                <h3>CUBIC</h3>
+                <span class="tag">Loss-based</span>
+              </div>
+              <p>
+                Unlike Reno, CUBIC uses a cubic window-growth function rather than a linear one. This
+                allows bandwidth to be recovered more efficiently than Reno on
+                high-bandwidth-delay-product paths.
+              </p>
+            </article>
+            <article class="algorithm">
+              <div class="algorithm-name">
+                <h3>Vegas</h3>
+                <span class="tag">Delay-based</span>
+              </div>
+              <p>
+                Vegas is a delay-based congestion control algorithm that attempts to proactively
+                detect congestion before packet loss occurs. Vegas’s approach can avoid some packet
+                loss and reduce queueing delay.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="methods">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">03 / Methods</p>
+            <h2>Environment Setup and Procedure</h2>
+            <p>
+              To emulate network behavior, we use the Linux utility tc (traffic control), which allows
+              configuration of queueing disciplines (qdiscs) within the kernel networking stack.
+            </p>
+          </div>
+          <div class="method-grid">
+            <div class="pipeline" aria-label="Experimental pipeline">
+              <article class="pipeline-step">
+                <span class="pipeline-number">1</span>
+                <div>
+                  <h3>Setup &amp; Cloning</h3>
+                  <p>Installed Ubuntu 25.10 on VMWare Fusion; created a Linked Clone for client/server pair.</p>
+                </div>
+              </article>
+              <article class="pipeline-step">
+                <span class="pipeline-number">2</span>
+                <div>
+                  <h3>Link Simulation</h3>
+                  <p>Utilized tc and netem to tweak latency, jitter, and loss variables.</p>
+                </div>
+              </article>
+              <article class="pipeline-step">
+                <span class="pipeline-number">3</span>
+                <div>
+                  <h3>Traffic Generation</h3>
+                  <p>Executed iperf3 tests between VMs to generate traffic using a specific algorithm.</p>
+                </div>
+              </article>
+              <article class="pipeline-step">
+                <span class="pipeline-number">4</span>
+                <div>
+                  <h3>Analysis</h3>
+                  <p>Collected JSON data to interpret trade-offs between throughput and latency control.</p>
+                </div>
+              </article>
+            </div>
+            <aside class="method-aside">
+              <div class="method-aside-header">
+                <h3>Trial protocol</h3>
+              </div>
+              <dl class="spec-list">
+                <div><dt>Algorithms</dt><dd>CUBIC, Reno, BBRv3, Vegas</dd></div>
+                <div><dt>Measured output</dt><dd>Receiver-side throughput</dd></div>
+                <div><dt>Trial duration</dt><dd>180 seconds</dd></div>
+                <div><dt>Warm-up omitted</dt><dd>60 seconds</dd></div>
+                <div><dt>Repeated runs</dt><dd>5 per condition and algorithm</dd></div>
+                <div><dt>Queue depth</dt><dd>2 x BDP deep buffer</dd></div>
+                <div><dt>Offloading</dt><dd>TSO, GSO, LRO, and GRO disabled</dd></div>
+              </dl>
+            </aside>
+          </div>
+          <div class="section-header" style="margin-top: 58px">
+            <p class="eyebrow">Common Links</p>
+            <h2>Representative Link Conditions</h2>
+            <p>
+              To evaluate performance under realistic networking environments, we simulated
+              representative terrestrial, Low Earth Orbit (LEO) satellite, and Geostationary Earth
+              Orbit (GEO) satellite link conditions.
+            </p>
+          </div>
+          <div class="matrix-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Link profile</th>
+                  <th>Delay</th>
+                  <th>Jitter</th>
+                  <th>Rate</th>
+                  <th>Loss</th>
+                  <th>Queue depth</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Terrestrial</td><td>20 ms</td><td>2 ms</td><td>90 Mbps</td><td>0.01%</td><td>300 packets</td></tr>
+                <tr><td>LEO</td><td>80 ms</td><td>8 ms</td><td>50 Mbps</td><td>0.3%</td><td>667 packets</td></tr>
+                <tr><td>GEO 500 ms</td><td>500 ms</td><td>50 ms</td><td>20 Mbps</td><td>1%</td><td>1,667 packets</td></tr>
+                <tr><td>GEO 1000 ms</td><td>1,000 ms</td><td>100 ms</td><td>10 Mbps</td><td>3%</td><td>1,667 packets</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="matrix-note">
+            All tests below are listed with a queue depth of 2 × BDP, which is considered a very deep
+            buffer. We expect that this will favor loss-based CCAs.
+          </p>
+        </div>
+      </section>
+
+      <section class="section section-soft" id="findings">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">04 / Results</p>
+            <h2>Results</h2>
+            <p>
+              Our extended abstract presents preliminary results collected before the in-class poster
+              presentation followed by the final post-presentation trials across CUBIC, BBRv3, Reno,
+              and Vegas.
+            </p>
+          </div>
+
+          <div class="paper-results">
+            <div class="paper-results-intro">
+              <p class="eyebrow">Preliminary Data / Pre-Poster Presentation</p>
+              <h3>Initial single-trial results</h3>
+              <p>
+                This section outlines our preliminary results using data from limited trials that we
+                conducted before the in-class poster presentation. Note that only a single trial was
+                performed per test case, so interpret this data with some skepticism. Our final
+                results in the following section were collected using the rigorous methodology
+                described above, and largely validate these conclusions.
+              </p>
+            </div>
+
+            <div class="paper-result-group">
+              <div class="result-split preliminary-result-split">
+                <div class="result-copy">
+                  <p class="eyebrow">Preliminary Packet Loss Analysis</p>
+                  <h3>Packet loss versus throughput</h3>
+                  <p class="paper-result-analysis">
+                    To evaluate the impact of packet loss on throughput and stability, we varied the
+                    packet loss rate while keeping the network delay constant. The experiments were
+                    conducted with a fixed delay of 50 ms, 0 ms jitter, a 50 Mbps link rate, and a queue
+                    depth of 2×BDP.
+                  </p>
+                  <p class="paper-result-analysis">
+                    Under these conditions, BBRv3 maintained a high and stable throughput of
+                    approximately 45 Mbps across all loss rates. In contrast, CUBIC throughput decreased
+                    significantly as packet loss increased, indicating greater sensitivity to lossy
+                    network conditions.
+                  </p>
+                </div>
+                <figure class="paper-figure preliminary-figure">
+                  <a href="site-assets/paper-results/preliminary-loss-throughput.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="site-assets/paper-results/preliminary-loss-throughput.png"
+                      alt="Preliminary single-trial throughput comparison of CUBIC and BBRv3 as packet loss increases."
+                    />
+                  </a>
+                  <figcaption>
+                    Preliminary throughput comparison as packet loss increases
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+
+            <div class="paper-result-group">
+              <div class="result-split preliminary-result-split">
+                <div class="result-copy">
+                  <p class="eyebrow">Preliminary Delay Analysis</p>
+                  <h3>Delay versus throughput</h3>
+                  <p class="paper-result-analysis">
+                    To evaluate performance under increasing RTT, we varied the network delay while
+                    maintaining zero packet loss. The experiments were conducted with 0 ms jitter, a 50
+                    Mbps link rate, and a queue depth of 2×BDP.
+                  </p>
+                  <p class="paper-result-analysis">
+                    Under these conditions, BBR slightly outperformed CUBIC across the tested delay
+                    values. We hypothesize that BBR would demonstrate a larger performance advantage
+                    under shallow buffer conditions, where its bandwidth and RTT estimation mechanisms
+                    may better utilize available network capacity.
+                  </p>
+                </div>
+                <figure class="paper-figure preliminary-figure">
+                  <a href="site-assets/paper-results/preliminary-delay-throughput.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="site-assets/paper-results/preliminary-delay-throughput.png"
+                      alt="Preliminary single-trial throughput comparison of CUBIC and BBRv3 as delay increases."
+                    />
+                  </a>
+                  <figcaption>
+                    Preliminary throughput comparison as delay increases
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+
+            <div class="paper-result-group">
+              <div class="result-split preliminary-result-split">
+                <div class="result-copy">
+                  <p class="eyebrow">Preliminary Common Links</p>
+                  <h3>Representative link conditions</h3>
+                  <p class="paper-result-analysis">
+                    To evaluate performance under realistic networking environments, we simulated
+                    representative terrestrial, Low Earth Orbit (LEO) satellite, and Geostationary Earth
+                    Orbit (GEO) satellite link conditions.
+                  </p>
+                  <p class="paper-result-analysis">
+                    All experiments were conducted with a packet loss correlation of 25% and a queue
+                    depth of 2×BDP. Additional parameters for each category are listed in the table above.
+                  </p>
+                  <p class="paper-result-analysis">
+                    Both algorithms perform comparably, with CUBIC slightly outperforming BBRv3 for the
+                    Terrestrial, LEO, and GEO 1 test cases. BBRv3 significantly outperformed Cubic in the
+                    GEO 2 case, likely due to the high packet loss condition.
+                  </p>
+                </div>
+                <figure class="paper-figure preliminary-figure">
+                  <a href="site-assets/paper-results/preliminary-common-links-throughput.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="site-assets/paper-results/preliminary-common-links-throughput.png"
+                      alt="Preliminary single-trial throughput comparison of CUBIC and BBRv3 across representative terrestrial, LEO, and GEO links."
+                    />
+                  </a>
+                  <figcaption>
+                    Preliminary throughput comparison across representative links
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+              </div>
+            </div>
+
+            <div class="paper-result-group">
+              <p class="eyebrow">Post-Presentation Trials</p>
+              <h3>Final repeated-trial results</h3>
+              <p>
+                After collecting all data for Cubic, BBRv3, Reno and Vegas algorithms, and plotting
+                the results, we see that BBR continues to outperform in the throughput and
+                utilization throughput categories.
+              </p>
+              <div class="finding-grid">
+                <article class="finding finding-emphasis">
+                  <strong>45.30</strong>
+                  <h3>BBRv3 Mbps at 3% packet loss</h3>
+                  <p>Mean receiver-side throughput from the final loss trials.</p>
+                </article>
+                <article class="finding">
+                  <strong>6.89</strong>
+                  <h3>BBRv3 Mbps on GEO 1000 ms</h3>
+                  <p>Mean receiver-side throughput for the 1,000 ms delay, 100 ms jitter, and 3% loss profile.</p>
+                </article>
+                <article class="finding">
+                  <strong>47.82</strong>
+                  <h3>CUBIC Mbps at 1,000 ms delay</h3>
+                  <p>Mean receiver-side throughput for the delay-only test.</p>
+                </article>
+                <article class="finding">
+                  <strong>121.23</strong>
+                  <h3>BBRv3 retransmits per second at 3% loss</h3>
+                  <p>Mean retransmission rate from the final loss trials.</p>
+                </article>
+              </div>
+            </div>
+
+            <div class="paper-result-group">
+              <div class="result-split">
+                <div class="result-copy">
+                  <p class="eyebrow">Final Common Links</p>
+                  <h3>Throughput, utilization, and retransmits by category</h3>
+                  <p class="paper-result-analysis">
+                    However, there is a bigger picture: we notice that BBRv3 is the highest by a large
+                    factor when it comes to retransmission numbers. While BBRv3 is designed to maximize
+                    throughput through aggressive bandwidth probing, these results suggest that on GEO
+                    networks it may introduce instability or excess packet loss, whereas Reno, CUBIC,
+                    and Vegas remain comparatively stable.
+                  </p>
+                </div>
+                <div class="result-carousel" data-carousel aria-label="Final common-links figures">
+                  <div class="carousel-viewport">
+                    <figure class="paper-figure carousel-slide active">
+                  <a href="analysis/plots/common_links/throughput_by_category_algorithm.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/common_links/throughput_by_category_algorithm.png"
+                      alt="Throughput by algorithm across terrestrial, LEO, GEO 500 ms, and GEO 1000 ms profiles."
+                    />
+                  </a>
+                  <figcaption>
+                    Common links: throughput by category
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                    <figure class="paper-figure carousel-slide">
+                  <a href="analysis/plots/common_links/utilization_by_category_algorithm.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/common_links/utilization_by_category_algorithm.png"
+                      alt="Utilization by algorithm across terrestrial, LEO, GEO 500 ms, and GEO 1000 ms profiles."
+                    />
+                  </a>
+                  <figcaption>
+                    Common links: utilization by category
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                    <figure class="paper-figure carousel-slide">
+                  <a href="analysis/plots/common_links/retransmits_per_second_by_category_algorithm.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/common_links/retransmits_per_second_by_category_algorithm.png"
+                      alt="Retransmits per second by algorithm across terrestrial, LEO, GEO 500 ms, and GEO 1000 ms profiles."
+                    />
+                  </a>
+                  <figcaption>
+                    Common links: retransmits by category
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                  </div>
+                  <div class="result-carousel-controls">
+                    <button class="carousel-button" type="button" data-carousel-prev aria-label="Previous common-links figure">
+                      <i data-lucide="chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <span class="carousel-status" data-carousel-status aria-live="polite">1 / 3</span>
+                    <button class="carousel-button" type="button" data-carousel-next aria-label="Next common-links figure">
+                      <i data-lucide="chevron-right" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="paper-result-group">
+              <div class="result-split">
+                <div class="result-copy">
+                  <p class="eyebrow">Final Delay Analysis</p>
+                  <h3>Delay-suite performance and convergence</h3>
+                  <p class="paper-result-analysis">
+                    Looking at delay vs throughput, TCP Cubic and Reno are the most stable, with BBRv3
+                    consistently tapering off and Vegas experiencing the highest drop at GEO-scale
+                    delays.
+                  </p>
+                  <p class="paper-result-analysis">
+                    Reno and Vegas maintained fast convergence times across all RTTs, while CUBIC showed
+                    increased convergence time at very high delays despite preserving strong throughput
+                    performance. BBRv3 exhibited the most inconsistent convergence behavior. We can see
+                    this in the pretty significant fluctuations across delay periods.
+                  </p>
+                </div>
+                <div class="result-carousel" data-carousel aria-label="Final delay-suite figures">
+                  <div class="carousel-viewport">
+                    <figure class="paper-figure carousel-slide active">
+                  <a href="analysis/plots/delay/throughput_vs_delay_ms.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/delay/throughput_vs_delay_ms.png"
+                      alt="Throughput versus configured delay for CUBIC, Reno, BBRv3, and Vegas."
+                    />
+                  </a>
+                  <figcaption>
+                    Delay suite: throughput versus delay
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                    <figure class="paper-figure carousel-slide">
+                  <a href="analysis/plots/delay/utilization_vs_delay_ms.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/delay/utilization_vs_delay_ms.png"
+                      alt="Utilization versus configured delay for CUBIC, Reno, BBRv3, and Vegas."
+                    />
+                  </a>
+                  <figcaption>
+                    Delay suite: utilization versus delay
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                    <figure class="paper-figure carousel-slide">
+                  <a href="analysis/plots/delay/convergence_time_vs_delay_ms.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/delay/convergence_time_vs_delay_ms.png"
+                      alt="Convergence time versus configured delay for CUBIC, Reno, BBRv3, and Vegas."
+                    />
+                  </a>
+                  <figcaption>
+                    Delay suite: convergence time versus delay
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                  </div>
+                  <div class="result-carousel-controls">
+                    <button class="carousel-button" type="button" data-carousel-prev aria-label="Previous delay-suite figure">
+                      <i data-lucide="chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <span class="carousel-status" data-carousel-status aria-live="polite">1 / 3</span>
+                    <button class="carousel-button" type="button" data-carousel-next aria-label="Next delay-suite figure">
+                      <i data-lucide="chevron-right" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="paper-result-group">
+              <div class="result-split">
+                <div class="result-copy">
+                  <p class="eyebrow">Final Packet Loss Analysis</p>
+                  <h3>Loss-suite retransmits, throughput, and utilization</h3>
+                  <p class="paper-result-analysis">
+                    Regarding loss, in accordance with earlier conclusions, BBRv3 is the highest in
+                    retransmission rates given percent loss. This is likely because its congestion
+                    control strategy is much more aggressive than the other algorithms, consistently
+                    transmitting at higher rates.
+                  </p>
+                  <p class="paper-result-analysis">
+                    To compensate for the more aggressive algorithm when it comes to retransmission, we
+                    can see that the throughput and utilization rates observed are much higher in BBRv3
+                    than the other algorithms, as before.
+                  </p>
+                </div>
+                <div class="result-carousel" data-carousel aria-label="Final packet-loss figures">
+                  <div class="carousel-viewport">
+                    <figure class="paper-figure carousel-slide active">
+                  <a href="analysis/plots/loss/retransmits_per_second_vs_loss_pct.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/loss/retransmits_per_second_vs_loss_pct.png"
+                      alt="Retransmits per second versus configured packet loss for CUBIC, Reno, BBRv3, and Vegas."
+                    />
+                  </a>
+                  <figcaption>
+                    Loss suite: retransmits versus loss
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                    <figure class="paper-figure carousel-slide">
+                  <a href="analysis/plots/loss/throughput_vs_loss_pct.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/loss/throughput_vs_loss_pct.png"
+                      alt="Throughput versus configured packet loss for CUBIC, Reno, BBRv3, and Vegas."
+                    />
+                  </a>
+                  <figcaption>
+                    Loss suite: throughput versus loss
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                    <figure class="paper-figure carousel-slide">
+                  <a href="analysis/plots/loss/utilization_vs_loss_pct.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/loss/utilization_vs_loss_pct.png"
+                      alt="Utilization versus configured packet loss for CUBIC, Reno, BBRv3, and Vegas."
+                    />
+                  </a>
+                  <figcaption>
+                    Loss suite: utilization versus loss
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                  </div>
+                  <div class="result-carousel-controls">
+                    <button class="carousel-button" type="button" data-carousel-prev aria-label="Previous packet-loss figure">
+                      <i data-lucide="chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <span class="carousel-status" data-carousel-status aria-live="polite">1 / 3</span>
+                    <button class="carousel-button" type="button" data-carousel-next aria-label="Next packet-loss figure">
+                      <i data-lucide="chevron-right" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="paper-result-group">
+              <div class="result-split summary-result-split">
+                <div class="result-copy">
+                  <p class="eyebrow">Final Summary</p>
+                  <h3>Winner table and utilization heatmap</h3>
+                  <p class="paper-result-analysis">
+                    There are more specific test case graphs available for viewing on the GitHub to
+                    visualize specific conditions, however there is a “winner table” of specific
+                    conditions outlined below of algorithm “bests” and which algorithm is most effective
+                    in each category. The competition is clearly between BBRv3 and Cubic.
+                  </p>
+                  <p class="paper-result-analysis">
+                    We also have a heat map mapping utilization rates across conditions and algorithms.
+                    Visually, it is clear that BBRv3 outperforms the other algorithms in this capacity.
+                    The yellow is max utilization, and the purple is the min. BBRv3 is majority yellow
+                    and green across all conditions, and more yellow across most indicating a higher
+                    overall efficiency.
+                  </p>
+                </div>
+                <div class="result-carousel summary-carousel" data-carousel aria-label="Final summary figures">
+                  <div class="carousel-viewport">
+                    <figure class="paper-figure carousel-slide active">
+                  <a href="analysis/plots/summary/winner_table.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/summary/winner_table.png"
+                      alt="Winner table showing the algorithm with the highest throughput and utilization for each test condition."
+                    />
+                  </a>
+                  <figcaption>
+                    Winner table by condition
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                    <figure class="paper-figure carousel-slide">
+                  <a href="analysis/plots/summary/utilization_by_condition_heatmap.png" target="_blank" rel="noreferrer">
+                    <img
+                      src="analysis/plots/summary/utilization_by_condition_heatmap.png"
+                      alt="Heatmap showing utilization by condition and algorithm."
+                    />
+                  </a>
+                  <figcaption>
+                    Utilization by condition and algorithm
+                    <i data-lucide="external-link" aria-hidden="true"></i>
+                  </figcaption>
+                </figure>
+                  </div>
+                  <div class="result-carousel-controls">
+                    <button class="carousel-button" type="button" data-carousel-prev aria-label="Previous summary figure">
+                      <i data-lucide="chevron-left" aria-hidden="true"></i>
+                    </button>
+                    <span class="carousel-status" data-carousel-status aria-live="polite">1 / 2</span>
+                    <button class="carousel-button" type="button" data-carousel-next aria-label="Next summary figure">
+                      <i data-lucide="chevron-right" aria-hidden="true"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-blue" id="figures">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">05 / Figures</p>
+            <h2>Generated Figures</h2>
+            <p>
+              The final analysis includes 26 figures generated from the receiver-side iperf3 results.
+              Select a suite and figure below to review the plotted results.
+            </p>
+          </div>
+          <div class="viewer-shell">
+            <div class="viewer-toolbar">
+              <div class="viewer-tabs" role="tablist" aria-label="Figure category filter"></div>
+              <span class="viewer-counter" aria-live="polite"></span>
+            </div>
+            <div class="viewer-main">
+              <div class="figure-list" aria-label="Available figures"></div>
+              <div class="figure-stage">
+                <div class="figure-canvas">
+                  <img class="active-figure-image" src="" alt="" />
+                </div>
+                <div class="figure-meta">
+                  <div>
+                    <h3 class="active-figure-title"></h3>
+                    <p class="active-figure-description"></p>
+                  </div>
+                  <div class="viewer-actions">
+                    <button class="btn btn-light btn-icon open-lightbox" type="button" title="Open full-size figure" aria-label="Open full-size figure">
+                      <i data-lucide="maximize-2" aria-hidden="true"></i>
+                    </button>
+                    <a class="btn btn-light btn-icon download-figure" href="" download title="Download figure" aria-label="Download figure">
+                      <i data-lucide="download" aria-hidden="true"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="future" aria-labelledby="future-title">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">06 / Future Work</p>
+            <h2 id="future-title">Future Work</h2>
+            <p>
+              With additional time, there are a variety of improvements and additional cases to
+              investigate.
+            </p>
+          </div>
+          <div class="future-grid">
+            <article class="future-item">
+              <i data-lucide="layers-3" aria-hidden="true"></i>
+              <h3>Buffer depths</h3>
+              <p>Primarily, we plan on testing a variety of buffer depths.</p>
+            </article>
+            <article class="future-item">
+              <i data-lucide="timer" aria-hidden="true"></i>
+              <h3>Latency</h3>
+              <p>Additionally, we would like to measure latency as a performance metric in addition to bandwidth.</p>
+            </article>
+            <article class="future-item">
+              <i data-lucide="git-branch" aria-hidden="true"></i>
+              <h3>Parallel flows and fairness</h3>
+              <p>Further investigation with competing parallel flows and fairness between algorithms would be informative.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section-soft" id="documents">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">07 / Documents</p>
+            <h2>Project Documents</h2>
+            <p>
+              The extended abstract contains our final write-up. The poster and presentation deck
+              document the project at the midpoint presentation.
+            </p>
+          </div>
+          <div class="pdf-reader">
+            <div class="pdf-toolbar">
+              <div class="pdf-tabs" role="tablist" aria-label="Project PDF viewer">
+                <button
+                  class="pdf-tab active"
+                  type="button"
+                  role="tab"
+                  aria-selected="true"
+                  data-pdf-src="project-resources/extended-abstract.pdf"
+                  data-pdf-title="Extended Abstract"
+                >
+                  Extended Abstract
+                </button>
+                <button
+                  class="pdf-tab"
+                  type="button"
+                  role="tab"
+                  aria-selected="false"
+                  data-pdf-src="project-resources/EE%20122%20Final%20Presentation%20Poster.pdf"
+                  data-pdf-title="Project Poster"
+                >
+                  Poster
+                </button>
+                <button
+                  class="pdf-tab"
+                  type="button"
+                  role="tab"
+                  aria-selected="false"
+                  data-pdf-src="project-resources/ee122-presentation.pdf"
+                  data-pdf-title="Presentation Deck"
+                >
+                  Presentation
+                </button>
+              </div>
+              <a
+                class="btn btn-light pdf-open-link"
+                href="project-resources/extended-abstract.pdf"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <i data-lucide="external-link" aria-hidden="true"></i>
+                Open PDF
+              </a>
+            </div>
+            <iframe
+              class="pdf-frame"
+              src="project-resources/extended-abstract.pdf"
+              title="Extended Abstract PDF viewer"
+            ></iframe>
+          </div>
+          <figure class="source-clipping source-clipping-poster" style="margin-bottom: 34px">
+            <img
+              src="site-assets/document-clippings/project-poster.png"
+              alt="Upper portion of the uploaded midpoint poster, including the title and initial BBR and CUBIC comparison."
+            />
+            <figcaption>Uploaded midpoint poster clipping: project title and initial BBR and CUBIC comparison.</figcaption>
+          </figure>
+          <div class="document-grid">
+            <article class="document document-primary">
+              <div>
+                <i data-lucide="file-text" aria-hidden="true"></i>
+                <span class="document-meta">Final publication / primary source</span>
+                <h3>Extended Abstract</h3>
+                <p>Our final paper, including the introduction, methods, results, conclusion, future work, acknowledgements, and references.</p>
+              </div>
+              <div class="doc-actions">
+                <a class="btn" href="project-resources/extended-abstract.pdf" target="_blank" rel="noreferrer">
+                  <i data-lucide="external-link" aria-hidden="true"></i>
+                  Open PDF
+                </a>
+              </div>
+            </article>
+            <article class="document">
+              <div>
+                <i data-lucide="presentation" aria-hidden="true"></i>
+                <span class="document-meta">Midpoint artifact</span>
+                <h3>Project Poster</h3>
+                <p>Our poster from the midpoint presentation, including the preliminary CUBIC and BBRv3 results.</p>
+              </div>
+              <div class="doc-actions">
+                <a class="btn btn-light" href="project-resources/EE%20122%20Final%20Presentation%20Poster.pdf" target="_blank" rel="noreferrer">
+                  <i data-lucide="external-link" aria-hidden="true"></i>
+                  Open PDF
+                </a>
+              </div>
+            </article>
+            <article class="document">
+              <div>
+                <i data-lucide="projector" aria-hidden="true"></i>
+                <span class="document-meta">Midpoint artifact</span>
+                <h3>Presentation Deck</h3>
+                <p>Our midpoint presentation deck, including the experimental process, preliminary results, and planned analysis pipeline.</p>
+              </div>
+              <div class="doc-actions">
+                <a class="btn btn-light" href="project-resources/ee122-presentation.pdf" target="_blank" rel="noreferrer">
+                  <i data-lucide="external-link" aria-hidden="true"></i>
+                  Open PDF
+                </a>
+              </div>
+            </article>
+            <article class="document">
+              <div>
+                <i data-lucide="github" aria-hidden="true"></i>
+                <span class="document-meta">Code and data analysis</span>
+                <h3>GitHub Repository</h3>
+                <p>Our experiment setup scripts, analysis pipeline, generated figures, and project materials.</p>
+              </div>
+              <div class="doc-actions">
+                <a class="btn btn-light" href="https://github.com/rohinshanker/EE-122-simulation" target="_blank" rel="noreferrer">
+                  <i data-lucide="external-link" aria-hidden="true"></i>
+                  Open repository
+                </a>
+              </div>
+            </article>
+          </div>
+          <div class="acknowledgement">
+            <p>
+              This project was developed in collaboration with <strong>LabN</strong>, and we would like
+              to thank Dan Lukaszewski for his support and guidance throughout the project.
+            </p>
+            <a class="btn btn-light" href="https://labn.net/" target="_blank" rel="noreferrer">
+              <i data-lucide="external-link" aria-hidden="true"></i>
+              Visit LabN
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="team">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">08 / Team</p>
+            <h2>About the Team</h2>
+            <p>
+              Nicholas Carpenedo, Allison Dana, and Rohin Shanker completed this project for
+              Electrical Engineering 122 at the University of California, Berkeley. We would also
+              like to thank Dan Lukaszewski for his support and guidance throughout the project.
+            </p>
+          </div>
+          <div class="team-grid">
+            <article class="team-member">
+              <div class="profile-placeholder" aria-label="Blank profile photo placeholder">
+                <i data-lucide="user-round" aria-hidden="true"></i>
+              </div>
+              <span class="team-role">Project team</span>
+              <h3>Nicholas Carpenedo</h3>
+              <p>About me description coming soon.</p>
+              <div class="team-links">
+                <a href="https://www.linkedin.com/in/nickcarpenedo" target="_blank" rel="noreferrer">
+                  <i data-lucide="linkedin" aria-hidden="true"></i>
+                  LinkedIn
+                </a>
+              </div>
+            </article>
+            <article class="team-member">
+              <div class="profile-placeholder" aria-label="Blank profile photo placeholder">
+                <i data-lucide="user-round" aria-hidden="true"></i>
+              </div>
+              <span class="team-role">Project team</span>
+              <h3>Rohin Shanker</h3>
+              <p>About me description coming soon.</p>
+              <div class="team-links">
+                <a href="https://www.linkedin.com/in/rohin-shanker" target="_blank" rel="noreferrer">
+                  <i data-lucide="linkedin" aria-hidden="true"></i>
+                  LinkedIn
+                </a>
+              </div>
+            </article>
+            <article class="team-member">
+              <div class="profile-placeholder" aria-label="Blank profile photo placeholder">
+                <i data-lucide="user-round" aria-hidden="true"></i>
+              </div>
+              <span class="team-role">Project team</span>
+              <h3>Allison Dana</h3>
+              <p>About me description coming soon.</p>
+              <div class="team-links">
+                <a href="https://www.linkedin.com/in/allison-dana" target="_blank" rel="noreferrer">
+                  <i data-lucide="linkedin" aria-hidden="true"></i>
+                  LinkedIn
+                </a>
+              </div>
+            </article>
+            <article class="team-member team-member-mentor">
+              <div class="profile-placeholder" aria-label="Blank profile photo placeholder">
+                <i data-lucide="handshake" aria-hidden="true"></i>
+              </div>
+              <span class="team-role">Additional contributor / LabN mentor</span>
+              <h3>Dan Lukaszewski</h3>
+              <p>Supported the project with guidance throughout the study in collaboration with LabN.</p>
+              <div class="team-links">
+                <a href="https://labn.net/" target="_blank" rel="noreferrer">
+                  <i data-lucide="external-link" aria-hidden="true"></i>
+                  LabN
+                </a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section course-section" id="course">
+        <div class="container">
+          <div class="section-header">
+            <p class="eyebrow">09 / Course</p>
+            <h2>EE 122: Introduction to Communication Networks</h2>
+          </div>
+          <div class="course-grid">
+            <div class="course-copy">
+              <p>
+                EE 122 examines communication-network architecture and analysis from the physical
+                layer through transport and applications. Our project applies its transport-layer
+                material to TCP congestion control under emulated network conditions.
+              </p>
+              <a class="course-reference" href="https://www2.eecs.berkeley.edu/Courses/EE122/" target="_blank" rel="noreferrer">
+                UC Berkeley EECS course page
+                <i data-lucide="external-link" aria-hidden="true"></i>
+              </a>
+            </div>
+            <aside class="course-instructor">
+              <span>Spring 2026 instructor</span>
+              <h3>Shyam Parekh</h3>
+              <p>Adjunct Professor, UC Berkeley EECS</p>
+              <a href="https://www2.eecs.berkeley.edu/Faculty/Homepages/shyamparekh.html" target="_blank" rel="noreferrer">
+                Faculty profile
+                <i data-lucide="external-link" aria-hidden="true"></i>
+              </a>
+            </aside>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-shell">
+        <p>Comparative Analysis of Modern TCP Congestion Control Algorithms · EE 122 · May 2026</p>
+        <a href="https://github.com/rohinshanker/EE-122-simulation" target="_blank" rel="noreferrer">
+          View project repository
+        </a>
+      </div>
+    </footer>
+
+    <div class="lightbox" role="dialog" aria-modal="true" aria-label="Full-size figure viewer">
+      <div class="lightbox-inner">
+        <div class="lightbox-bar">
+          <strong class="lightbox-title"></strong>
+          <button class="btn btn-light btn-icon close-lightbox" type="button" title="Close figure" aria-label="Close full-size figure">
+            <i data-lucide="x" aria-hidden="true"></i>
+          </button>
+        </div>
+        <img class="lightbox-image" src="" alt="" />
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+    <script>
+      const figures = [
+        ["summary", "Utilization Heatmap", "analysis/plots/summary/utilization_by_condition_heatmap.png", "Mean utilization across every condition and algorithm."],
+        ["summary", "Winner Table", "analysis/plots/summary/winner_table.png", "Best mean-throughput and utilization algorithm for each condition."],
+        ["loss", "Throughput vs Loss", "analysis/plots/loss/throughput_vs_loss_pct.png", "Receiver-side throughput as configured packet loss increases."],
+        ["loss", "Utilization vs Loss", "analysis/plots/loss/utilization_vs_loss_pct.png", "Link utilization as configured packet loss increases."],
+        ["loss", "Retransmits vs Loss", "analysis/plots/loss/retransmits_per_second_vs_loss_pct.png", "Retransmissions per second as configured packet loss increases."],
+        ["delay", "Throughput vs Delay", "analysis/plots/delay/throughput_vs_delay_ms.png", "Receiver-side throughput as configured one-way delay increases."],
+        ["delay", "Utilization vs Delay", "analysis/plots/delay/utilization_vs_delay_ms.png", "Link utilization across the delay suite."],
+        ["delay", "Convergence vs Delay", "analysis/plots/delay/convergence_time_vs_delay_ms.png", "Time to reach at least 90% of final throughput for three consecutive intervals."],
+        ["rate", "Throughput vs Configured Rate", "analysis/plots/rate/throughput_vs_rate_mbps.png", "Measured throughput versus configured rate, with the ideal y=x reference."],
+        ["rate", "Utilization vs Configured Rate", "analysis/plots/rate/utilization_vs_rate_mbps.png", "Link utilization across the configured-rate suite."],
+        ["common", "Common Links / Throughput", "analysis/plots/common_links/throughput_by_category_algorithm.png", "Throughput across terrestrial, LEO, and GEO-style profiles."],
+        ["common", "Common Links / Utilization", "analysis/plots/common_links/utilization_by_category_algorithm.png", "Utilization across terrestrial, LEO, and GEO-style profiles."],
+        ["common", "Common Links / Retransmits", "analysis/plots/common_links/retransmits_per_second_by_category_algorithm.png", "Retransmissions per second across representative link profiles."],
+        ["time", "Loss Timeline / 0%", "analysis/plots/time_series/loss_loss_0pct_throughput.png", "Interval throughput over time for the zero-loss representative condition."],
+        ["time", "Loss Timeline / 0.5%", "analysis/plots/time_series/loss_loss_0p5pct_throughput.png", "Interval throughput over time for the 0.5% loss condition."],
+        ["time", "Loss Timeline / 3%", "analysis/plots/time_series/loss_loss_3pct_throughput.png", "Interval throughput over time for the 3% loss condition."],
+        ["time", "Delay Timeline / 10 ms", "analysis/plots/time_series/delay_delay_10ms_throughput.png", "Interval throughput over time for the 10 ms delay condition."],
+        ["time", "Delay Timeline / 50 ms", "analysis/plots/time_series/delay_delay_50ms_throughput.png", "Interval throughput over time for the 50 ms delay condition."],
+        ["time", "Delay Timeline / 1000 ms", "analysis/plots/time_series/delay_delay_1000ms_throughput.png", "Interval throughput over time for the 1000 ms delay condition."],
+        ["time", "Rate Timeline / 1 Mbps", "analysis/plots/time_series/rate_rate_1mbps_throughput.png", "Interval throughput over time for the 1 Mbps rate condition."],
+        ["time", "Rate Timeline / 50 Mbps", "analysis/plots/time_series/rate_rate_50mbps_throughput.png", "Interval throughput over time for the 50 Mbps rate condition."],
+        ["time", "Rate Timeline / 75 Mbps", "analysis/plots/time_series/rate_rate_75mbps_throughput.png", "Interval throughput over time for the 75 Mbps rate condition."],
+        ["time", "Terrestrial Timeline", "analysis/plots/time_series/common_links_terrestrial_throughput.png", "Interval throughput over time for the terrestrial profile."],
+        ["time", "LEO Timeline", "analysis/plots/time_series/common_links_leo_throughput.png", "Interval throughput over time for the LEO profile."],
+        ["time", "GEO 500 ms Timeline", "analysis/plots/time_series/common_links_geo_500ms_throughput.png", "Interval throughput over time for the 500 ms GEO profile."],
+        ["time", "GEO 1000 ms Timeline", "analysis/plots/time_series/common_links_geo_1000ms_throughput.png", "Interval throughput over time for the 1000 ms GEO profile."]
+      ].map(([category, title, src, description]) => ({ category, title, src, description }));
+
+      const filterLabels = {
+        all: "All",
+        summary: "Summary",
+        loss: "Loss",
+        delay: "Delay",
+        rate: "Rate",
+        common: "Common Links",
+        time: "Time Series"
+      };
+
+      const state = { filter: "all", selected: figures[0] };
+      const tabRoot = document.querySelector(".viewer-tabs");
+      const listRoot = document.querySelector(".figure-list");
+      const counter = document.querySelector(".viewer-counter");
+      const image = document.querySelector(".active-figure-image");
+      const title = document.querySelector(".active-figure-title");
+      const description = document.querySelector(".active-figure-description");
+      const download = document.querySelector(".download-figure");
+      const lightbox = document.querySelector(".lightbox");
+      const lightboxImage = document.querySelector(".lightbox-image");
+      const lightboxTitle = document.querySelector(".lightbox-title");
+
+      function filteredFigures() {
+        return state.filter === "all" ? figures : figures.filter((figure) => figure.category === state.filter);
+      }
+
+      function renderTabs() {
+        tabRoot.innerHTML = "";
+        Object.entries(filterLabels).forEach(([key, label]) => {
+          const button = document.createElement("button");
+          button.className = `viewer-tab${state.filter === key ? " active" : ""}`;
+          button.type = "button";
+          button.role = "tab";
+          button.ariaSelected = state.filter === key ? "true" : "false";
+          button.textContent = label;
+          button.addEventListener("click", () => {
+            state.filter = key;
+            const visible = filteredFigures();
+            if (!visible.includes(state.selected)) state.selected = visible[0];
+            renderViewer();
+          });
+          tabRoot.appendChild(button);
+        });
+      }
+
+      function selectFigure(figure) {
+        state.selected = figure;
+        renderViewer();
+      }
+
+      function renderList() {
+        const visible = filteredFigures();
+        listRoot.innerHTML = "";
+        visible.forEach((figure) => {
+          const button = document.createElement("button");
+          button.className = `figure-list-button${figure === state.selected ? " active" : ""}`;
+          button.type = "button";
+          button.innerHTML = `<span>${filterLabels[figure.category]}</span><strong>${figure.title}</strong>`;
+          button.addEventListener("click", () => selectFigure(figure));
+          listRoot.appendChild(button);
+        });
+        counter.textContent = `${visible.length} of ${figures.length} figures`;
+      }
+
+      function renderStage() {
+        image.src = state.selected.src;
+        image.alt = state.selected.description;
+        title.textContent = state.selected.title;
+        description.textContent = state.selected.description;
+        download.href = state.selected.src;
+        lightboxImage.src = state.selected.src;
+        lightboxImage.alt = state.selected.description;
+        lightboxTitle.textContent = state.selected.title;
+      }
+
+      function renderViewer() {
+        renderTabs();
+        renderList();
+        renderStage();
+        if (window.lucide) lucide.createIcons();
+      }
+
+      function setLightbox(open) {
+        lightbox.classList.toggle("open", open);
+        document.body.style.overflow = open ? "hidden" : "";
+      }
+
+      document.querySelector(".open-lightbox").addEventListener("click", () => setLightbox(true));
+      document.querySelector(".close-lightbox").addEventListener("click", () => setLightbox(false));
+      lightbox.addEventListener("click", (event) => {
+        if (event.target === lightbox) setLightbox(false);
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") setLightbox(false);
+      });
+
+      const navToggle = document.querySelector(".nav-toggle");
+      const mainNav = document.querySelector(".main-nav");
+      navToggle.addEventListener("click", () => {
+        const open = mainNav.classList.toggle("open");
+        navToggle.setAttribute("aria-expanded", String(open));
+      });
+      mainNav.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          mainNav.classList.remove("open");
+          navToggle.setAttribute("aria-expanded", "false");
+        });
+      });
+
+      const sectionLinks = [...mainNav.querySelectorAll("[data-section-link]")];
+      const trackedSections = sectionLinks.map((link) => ({
+        link,
+        section: document.querySelector(link.getAttribute("href"))
+      }));
+
+      function setActiveSection(link) {
+        sectionLinks.forEach((candidate) => {
+          const active = candidate === link;
+          candidate.classList.toggle("active", active);
+          if (active) {
+            candidate.setAttribute("aria-current", "location");
+          } else {
+            candidate.removeAttribute("aria-current");
+          }
+        });
+      }
+
+      function updateActiveSection() {
+        const headerOffset = document.querySelector(".site-header").offsetHeight + 32;
+        const atPageBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+        let current = trackedSections[0]?.link || null;
+
+        trackedSections.forEach(({ link, section }) => {
+          if (section && section.offsetTop <= window.scrollY + headerOffset) current = link;
+        });
+
+        if (atPageBottom) current = trackedSections[trackedSections.length - 1].link;
+        setActiveSection(current);
+      }
+
+      let sectionUpdateQueued = false;
+      window.addEventListener("scroll", () => {
+        if (sectionUpdateQueued) return;
+        sectionUpdateQueued = true;
+        window.requestAnimationFrame(() => {
+          updateActiveSection();
+          sectionUpdateQueued = false;
+        });
+      });
+      window.addEventListener("resize", updateActiveSection);
+      sectionLinks.forEach((link) => {
+        link.addEventListener("click", () => setActiveSection(link));
+      });
+      updateActiveSection();
+
+      const pdfFrame = document.querySelector(".pdf-frame");
+      const pdfOpenLink = document.querySelector(".pdf-open-link");
+      document.querySelectorAll(".pdf-tab").forEach((tab) => {
+        tab.addEventListener("click", () => {
+          document.querySelectorAll(".pdf-tab").forEach((candidate) => {
+            const active = candidate === tab;
+            candidate.classList.toggle("active", active);
+            candidate.setAttribute("aria-selected", String(active));
+          });
+          pdfFrame.src = tab.dataset.pdfSrc;
+          pdfFrame.title = `${tab.dataset.pdfTitle} PDF viewer`;
+          pdfOpenLink.href = tab.dataset.pdfSrc;
+        });
+      });
+
+      document.querySelectorAll("[data-carousel]").forEach((carousel) => {
+        const slides = [...carousel.querySelectorAll(".carousel-slide")];
+        const status = carousel.querySelector("[data-carousel-status]");
+        let current = 0;
+
+        function showSlide(index) {
+          current = (index + slides.length) % slides.length;
+          slides.forEach((slide, slideIndex) => {
+            const active = slideIndex === current;
+            slide.classList.toggle("active", active);
+            slide.setAttribute("aria-hidden", String(!active));
+          });
+          status.textContent = `${current + 1} / ${slides.length}`;
+        }
+
+        carousel.querySelector("[data-carousel-prev]").addEventListener("click", () => showSlide(current - 1));
+        carousel.querySelector("[data-carousel-next]").addEventListener("click", () => showSlide(current + 1));
+        showSlide(0);
+      });
+
+      renderViewer();
+    </script>
+  </body>
+</html>
