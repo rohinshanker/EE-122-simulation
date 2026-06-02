@@ -38,6 +38,7 @@
       html {
         scroll-behavior: smooth;
         scroll-padding-top: 74px;
+        overflow-x: hidden;
       }
 
       body {
@@ -48,6 +49,7 @@
           Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
           sans-serif;
         line-height: 1.55;
+        overflow-x: hidden;
       }
 
       img {
@@ -69,7 +71,7 @@
       }
 
       .container {
-        width: min(calc(100% - 40px), var(--max));
+        width: min(calc(100vw - 40px), var(--max));
         margin-inline: auto;
       }
 
@@ -176,9 +178,13 @@
         color: var(--navy);
       }
 
+      .nav-toggle-mark {
+        display: none;
+      }
+
       .hero {
         position: relative;
-        height: 455px;
+        height: 569px;
         overflow: hidden;
         background: var(--navy);
         color: var(--white);
@@ -207,9 +213,13 @@
       .hero-content {
         position: relative;
         display: grid;
-        height: 455px;
+        height: 569px;
         align-content: center;
         padding-block: 24px 16px;
+      }
+
+      .hero-content > * {
+        min-width: 0;
       }
 
       .eyebrow {
@@ -255,6 +265,13 @@
         margin-bottom: 0;
         color: #d6e4f7;
         font-size: 0.9rem;
+      }
+
+      .hero-date {
+        margin: 6px 0 12px;
+        color: #b9cee9;
+        font-size: 0.78rem;
+        font-weight: 800;
       }
 
       .hero-actions,
@@ -819,6 +836,11 @@
         width: 100%;
         max-width: 440px;
         justify-self: end;
+      }
+
+      .paper-results .result-split > .paper-figure,
+      .paper-results .result-split > .result-carousel {
+        margin-top: 34px;
       }
 
       .result-carousel {
@@ -1429,7 +1451,28 @@
         }
 
         .nav-toggle {
+          position: fixed;
+          top: 14px;
+          right: 13px;
+          z-index: 60;
           display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .nav-toggle i,
+        .nav-toggle svg {
+          display: none;
+        }
+
+        .nav-toggle-mark {
+          display: block;
+          width: 20px;
+          height: 2px;
+          background: currentColor;
+          box-shadow:
+            0 -6px 0 currentColor,
+            0 6px 0 currentColor;
         }
       }
 
@@ -1473,7 +1516,7 @@
 
         .hero,
         .hero-content {
-          height: 455px;
+          height: 569px;
         }
 
         h1 {
@@ -1496,8 +1539,13 @@
         }
 
         .preliminary-figure {
+          margin-top: 0;
           max-width: 560px;
           justify-self: start;
+        }
+
+        .paper-results .result-split > .result-carousel {
+          margin-top: 0;
         }
 
         .course-section {
@@ -1526,12 +1574,29 @@
 
       @media (max-width: 640px) {
         .container {
-          width: min(calc(100% - 26px), var(--max));
+          width: calc(100dvw - 26px);
+          max-width: calc(100dvw - 26px);
+        }
+
+        .section-header,
+        .intro-copy,
+        .course-copy,
+        .result-copy,
+        .paper-results-intro {
+          max-width: calc(100dvw - 26px);
+        }
+
+        .section-header p,
+        .intro-copy p,
+        .course-copy p,
+        .paper-result-analysis {
+          max-width: 340px;
+          overflow-wrap: break-word;
         }
 
         .hero,
         .hero-content {
-          height: 470px;
+          height: 588px;
         }
 
         .hero-content {
@@ -1539,21 +1604,31 @@
         }
 
         h1 {
-          font-size: 2.22rem;
+          max-width: 340px;
+          font-size: 2rem;
+          line-height: 1.05;
+          overflow-wrap: break-word;
         }
 
         .hero-lede {
+          max-width: 340px;
           font-size: 0.8rem;
           line-height: 1.45;
+          overflow-wrap: break-word;
+        }
+
+        .hero-actions,
+        .hero-metrics {
+          max-width: 340px;
         }
 
         .hero-metrics {
           margin-top: 8px;
-          grid-template-columns: repeat(4, 1fr);
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
 
         .hero-metric {
-          padding: 5px 3px 0 0;
+          padding: 5px 10px 0 0;
         }
 
         .hero-metric strong {
@@ -1666,10 +1741,11 @@
           <span class="brand-mark"><i data-lucide="network" aria-hidden="true"></i></span>
           <span class="brand-copy">
             <strong>TCP CCA Lab</strong>
-            <span>EE 122 / UC Berkeley</span>
+            <span>LabN / EE 122</span>
           </span>
         </a>
         <button class="nav-toggle btn-icon" type="button" aria-label="Toggle navigation" aria-expanded="false">
+          <span class="nav-toggle-mark" aria-hidden="true"></span>
           <i data-lucide="menu" aria-hidden="true"></i>
         </button>
         <nav class="main-nav" aria-label="Main navigation">
@@ -1705,6 +1781,7 @@
             The goal of this project is to evaluate and compare the performance of modern TCP
             congestion control algorithms under a range of emulated network conditions.
           </p>
+          <p class="hero-date">May 10th, 2026</p>
           <div class="hero-actions">
             <a class="btn" href="#figures">
               <i data-lucide="chart-no-axes-combined" aria-hidden="true"></i>
@@ -2293,29 +2370,29 @@
                 <div class="result-carousel summary-carousel" data-carousel aria-label="Final summary figures">
                   <div class="carousel-viewport">
                     <figure class="paper-figure carousel-slide active">
-                  <a href="analysis/plots/summary/winner_table.png" target="_blank" rel="noreferrer">
-                    <img
-                      src="analysis/plots/summary/winner_table.png"
-                      alt="Winner table showing the algorithm with the highest throughput and utilization for each test condition."
-                    />
-                  </a>
-                  <figcaption>
-                    Winner table by condition
-                    <i data-lucide="external-link" aria-hidden="true"></i>
-                  </figcaption>
-                </figure>
+                      <a href="analysis/plots/summary/winner_table.png" target="_blank" rel="noreferrer">
+                        <img
+                          src="analysis/plots/summary/winner_table.png"
+                          alt="Winner table showing the algorithm with the highest throughput and utilization for each test condition."
+                        />
+                      </a>
+                      <figcaption>
+                        Winner table by condition
+                        <i data-lucide="external-link" aria-hidden="true"></i>
+                      </figcaption>
+                    </figure>
                     <figure class="paper-figure carousel-slide">
-                  <a href="analysis/plots/summary/utilization_by_condition_heatmap.png" target="_blank" rel="noreferrer">
-                    <img
-                      src="analysis/plots/summary/utilization_by_condition_heatmap.png"
-                      alt="Heatmap showing utilization by condition and algorithm."
-                    />
-                  </a>
-                  <figcaption>
-                    Utilization by condition and algorithm
-                    <i data-lucide="external-link" aria-hidden="true"></i>
-                  </figcaption>
-                </figure>
+                      <a href="analysis/plots/summary/utilization_by_condition_heatmap.png" target="_blank" rel="noreferrer">
+                        <img
+                          src="analysis/plots/summary/utilization_by_condition_heatmap.png"
+                          alt="Heatmap showing utilization by condition and algorithm."
+                        />
+                      </a>
+                      <figcaption>
+                        Utilization by condition and algorithm
+                        <i data-lucide="external-link" aria-hidden="true"></i>
+                      </figcaption>
+                    </figure>
                   </div>
                   <div class="result-carousel-controls">
                     <button class="carousel-button" type="button" data-carousel-prev aria-label="Previous summary figure">
@@ -2559,22 +2636,11 @@
                 <i data-lucide="user-round" aria-hidden="true"></i>
               </div>
               <span class="team-role">Project team</span>
-              <h3>Nicholas Carpenedo</h3>
-              <p>About me description coming soon.</p>
-              <div class="team-links">
-                <a href="https://www.linkedin.com/in/nickcarpenedo" target="_blank" rel="noreferrer">
-                  <i data-lucide="linkedin" aria-hidden="true"></i>
-                  LinkedIn
-                </a>
-              </div>
-            </article>
-            <article class="team-member">
-              <div class="profile-placeholder" aria-label="Blank profile photo placeholder">
-                <i data-lucide="user-round" aria-hidden="true"></i>
-              </div>
-              <span class="team-role">Project team</span>
               <h3>Rohin Shanker</h3>
-              <p>About me description coming soon.</p>
+              <p>
+                Rohin recently graduated from UC Berkeley with a B.S. in Bioengineering and EECS. He
+                is beginning his M.S. in Biomedical Engineering at Yale in the fall.
+              </p>
               <div class="team-links">
                 <a href="https://www.linkedin.com/in/rohin-shanker" target="_blank" rel="noreferrer">
                   <i data-lucide="linkedin" aria-hidden="true"></i>
@@ -2587,8 +2653,22 @@
                 <i data-lucide="user-round" aria-hidden="true"></i>
               </div>
               <span class="team-role">Project team</span>
+              <h3>Nicholas Carpenedo</h3>
+              <p>Nick graduated from Berkeley with a B.S. in EECS and will be starting work at</p>
+              <div class="team-links">
+                <a href="https://www.linkedin.com/in/nickcarpenedo" target="_blank" rel="noreferrer">
+                  <i data-lucide="linkedin" aria-hidden="true"></i>
+                  LinkedIn
+                </a>
+              </div>
+            </article>
+            <article class="team-member">
+              <div class="profile-placeholder" aria-label="Blank profile photo placeholder">
+                <i data-lucide="user-round" aria-hidden="true"></i>
+              </div>
+              <span class="team-role">Project team</span>
               <h3>Allison Dana</h3>
-              <p>About me description coming soon.</p>
+              <p>Allison is starting her 4th year at UC Berkeley and is getting a degree in EECS.</p>
               <div class="team-links">
                 <a href="https://www.linkedin.com/in/allison-dana" target="_blank" rel="noreferrer">
                   <i data-lucide="linkedin" aria-hidden="true"></i>
@@ -2600,7 +2680,7 @@
               <div class="profile-placeholder" aria-label="Blank profile photo placeholder">
                 <i data-lucide="handshake" aria-hidden="true"></i>
               </div>
-              <span class="team-role">Additional contributor / LabN mentor</span>
+              <span class="team-role">LabN mentor</span>
               <h3>Dan Lukaszewski</h3>
               <p>Supported the project with guidance throughout the study in collaboration with LabN.</p>
               <div class="team-links">
